@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { USER_HOST } from "@/lib/terminal/constants";
+import { BANNER_LINE_ID, USER_HOST } from "@/lib/terminal/constants";
 import { useTerminal } from "@/lib/terminal/useTerminal";
 import { mergeCustomVars } from "@/lib/themes/themes";
+import { BootSequence } from "./BootSequence";
 import { OutputBlock } from "./OutputBlock";
 import { Prompt } from "./Prompt";
 import { ThemeEditor } from "./ThemeEditor";
@@ -13,14 +14,13 @@ export function Terminal() {
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Resolved custom palette for the editor's wells/hex fields.
   const customResolved = useMemo(
     () => mergeCustomVars(term.customVars),
     [term.customVars],
   );
 
   // Clock renders a stable placeholder on the server + first client paint, then
-  // starts ticking post-mount — no SSR timestamp, so no hydration mismatch.
+  // ticks post-mount — no SSR timestamp, so no hydration mismatch.
   const [clock, setClock] = useState<string | null>(null);
   useEffect(() => {
     const tick = () => setClock(new Date().toTimeString().slice(0, 8));
@@ -29,29 +29,31 @@ export function Terminal() {
     return () => clearInterval(id);
   }, []);
 
-  // Keep the newest output in view.
   useEffect(() => {
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [term.lines]);
 
-  // Return focus to the input when a command finishes or the picker closes.
+  // Return focus to the input when nothing else owns it.
   useEffect(() => {
-    if (!term.isRunning && !term.customizerOpen) inputRef.current?.focus();
-  }, [term.isRunning, term.customizerOpen]);
+    if (!term.isRunning && !term.customizerOpen && !term.booting) {
+      inputRef.current?.focus();
+    }
+  }, [term.isRunning, term.customizerOpen, term.booting]);
 
   return (
     <>
       <main
         className="crt"
+        inert={term.booting}
         onMouseDown={(e) => {
-          // Don't steal focus from interactive controls or while selecting text.
+          if (term.booting) return;
           if (window.getSelection()?.toString()) return;
           if ((e.target as HTMLElement).closest("input, button, a")) return;
           inputRef.current?.focus();
         }}
       >
-        <div className="screen power-on">
+        <div className="screen">
           <header className="statusbar">
             <span className="statusbar-host">{USER_HOST}</span>
             <button
@@ -68,18 +70,26 @@ export function Terminal() {
           </header>
 
           <div className="scrollback" ref={scrollRef}>
-            {term.lines.map((line) =>
-              line.kind === "input" ? (
-                <div key={line.id} className="line line-input">
-                  <span className="prompt-ps1">{line.prompt}</span>
-                  <span className="line-input-value">{line.value}</span>
-                </div>
-              ) : (
-                <div key={line.id} className="line">
+            {term.lines.map((line) => {
+              if (line.kind === "input") {
+                return (
+                  <div key={line.id} className="line line-input">
+                    <span className="prompt-ps1">{line.prompt}</span>
+                    <span className="line-input-value">{line.value}</span>
+                  </div>
+                );
+              }
+              const isBanner = line.id === BANNER_LINE_ID;
+              const revealed = isBanner && term.bootReveal > 0;
+              return (
+                <div
+                  key={isBanner ? `${line.id}-${term.bootReveal}` : line.id}
+                  className={`line${revealed ? " glitch-reveal" : ""}`}
+                >
                   <OutputBlock content={line.content} />
                 </div>
-              ),
-            )}
+              );
+            })}
 
             <Prompt
               value={term.input}
@@ -88,7 +98,7 @@ export function Terminal() {
               onHistoryPrev={term.historyPrev}
               onHistoryNext={term.historyNext}
               onClear={term.clear}
-              isRunning={term.isRunning}
+              isRunning={term.isRunning || term.booting}
               inputRef={inputRef}
             />
           </div>
@@ -105,6 +115,8 @@ export function Terminal() {
         onReset={term.resetCustom}
         onClose={term.closeCustomizer}
       />
+
+      {term.booting && <BootSequence onComplete={term.completeBoot} />}
     </>
   );
 }

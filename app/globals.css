@@ -47,6 +47,7 @@ body {
 .screen {
   position: relative;
   flex: 1;
+  min-width: 0; /* allow shrinking below wide content (the ASCII banner) */
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -128,8 +129,10 @@ body {
  * ------------------------------------------------------------------ */
 .scrollback {
   flex: 1;
+  min-width: 0;
   min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden; /* wide ASCII scrolls within its own block, not the page */
   padding-right: 0.5rem;
   scrollbar-width: thin;
   scrollbar-color: var(--fg-dim) transparent;
@@ -265,8 +268,15 @@ body {
 
 .ob-ascii {
   margin: 0;
-  font: inherit;
-  line-height: 1.1;
+  /* Plex renders the ASCII name banner; Braille glyphs (the crest) fall back to a
+     symbol font that covers U+2800–28FF consistently, so the art stays aligned. */
+  font-family: var(--font-plex-mono), "Segoe UI Symbol", "Noto Sans Symbols 2",
+    "Apple Braille", "Apple Symbols", monospace;
+  /* Scales the wide ASCII art down on narrow screens, full-size on desktop. */
+  font-size: clamp(6px, 2.4vw, 15px);
+  line-height: 1.05;
+  white-space: pre;
+  overflow-x: auto;
 }
 
 .ob-link {
@@ -508,5 +518,217 @@ body {
   .editor-scrim,
   .theme-editor {
     animation: none;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Manchester United brand accent (theme-independent)                  *
+ * ------------------------------------------------------------------ */
+:root {
+  --united-red: #da291c; /* deep brand red — large crest art only */
+  --united-red-text: #ff6f61; /* lighter brand red — readable body text (WCAG AA on all themes) */
+}
+/* Brand-toned TEXT uses the lighter red for contrast. */
+.tone-brand {
+  color: var(--united-red-text);
+}
+/* The crest is large/graphical art: keep the deep brand red + a matching red glow
+   (overriding the inherited theme-colored glow so it doesn't glow e.g. green). */
+.ob-ascii.tone-brand {
+  color: var(--united-red);
+  text-shadow:
+    0 0 10px rgba(218, 41, 28, 0.6),
+    0 0 24px rgba(218, 41, 28, 0.32);
+}
+
+/* ------------------------------------------------------------------ *
+ * Boot sequence overlay                                               *
+ * ------------------------------------------------------------------ */
+.boot {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.75rem, 2.5vh, 1.75rem);
+  padding: clamp(1rem, 4vw, 2.5rem);
+  background: radial-gradient(120% 120% at 50% 40%, var(--bg-lift), var(--bg) 72%);
+  color: var(--fg);
+  text-shadow: 0 0 6px var(--glow);
+  overflow: hidden;
+  transform-origin: center;
+}
+.boot.boot-exit {
+  animation: boot-out 280ms ease forwards;
+}
+@keyframes boot-out {
+  to {
+    opacity: 0;
+  }
+}
+
+.boot-crest {
+  margin: 0;
+  /* Braille-capable symbol fonts first so every dot + blank glyph shares width. */
+  font-family: "Segoe UI Symbol", "Noto Sans Symbols 2", "Apple Braille",
+    "Apple Symbols", monospace;
+  font-size: clamp(7px, 1.7vw, 13px);
+  line-height: 1;
+  white-space: pre;
+  color: var(--united-red);
+  text-shadow:
+    0 0 10px rgba(218, 41, 28, 0.6),
+    0 0 24px rgba(218, 41, 28, 0.32);
+  animation: crest-in 720ms steps(2, end) both;
+}
+@keyframes crest-in {
+  0% {
+    opacity: 0;
+    transform: translateY(3px) skewX(3deg);
+    filter: brightness(2.2);
+  }
+  20% {
+    opacity: 1;
+    transform: translateX(-3px);
+  }
+  45% {
+    transform: translateX(3px);
+    filter: brightness(1.5);
+  }
+  70% {
+    transform: translateX(-1px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: brightness(1);
+  }
+}
+
+.boot-log {
+  width: min(680px, 92vw);
+  display: flex;
+  flex-direction: column;
+  font-size: clamp(0.72rem, 1.5vw, 0.95rem);
+  line-height: 1.6;
+}
+.boot-line {
+  display: flex;
+  gap: 1ch;
+  white-space: pre;
+  animation: boot-line-in 140ms ease both;
+}
+@keyframes boot-line-in {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.boot-tag {
+  flex: none;
+}
+.boot-text {
+  color: var(--fg);
+}
+.boot-ok .boot-tag {
+  color: var(--success);
+}
+.boot-warn .boot-tag {
+  color: var(--warn);
+}
+.boot-info .boot-tag {
+  color: var(--fg-dim);
+}
+.boot-mufc .boot-tag,
+.boot-mufc .boot-text {
+  color: var(--united-red-text);
+  text-shadow: 0 0 8px rgba(255, 111, 97, 0.45);
+}
+
+.boot-footer {
+  width: min(680px, 92vw);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.boot-progress {
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--fg-dim) 28%, transparent);
+}
+.boot-bar {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--glow);
+  transition: width 200ms ease;
+}
+.boot-skip {
+  align-self: flex-end;
+  font: inherit;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--fg-dim);
+  background: none;
+  border: 0;
+  padding: 0.2rem 0.1rem;
+  cursor: pointer;
+}
+.boot-skip:hover,
+.boot-skip:focus-visible {
+  color: var(--accent);
+  outline: 1px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------ *
+ * Glitch / scanline reveal for the name banner                        *
+ * ------------------------------------------------------------------ */
+.glitch-reveal {
+  animation: glitch-reveal 640ms steps(2, end) both;
+}
+@keyframes glitch-reveal {
+  0% {
+    opacity: 0;
+    clip-path: inset(0 0 92% 0);
+    transform: translateX(-3px);
+    filter: brightness(1.8);
+  }
+  25% {
+    opacity: 1;
+    clip-path: inset(0 0 40% 0);
+    transform: translateX(3px);
+  }
+  45% {
+    clip-path: inset(35% 0 25% 0);
+    transform: translateX(-2px);
+  }
+  65% {
+    clip-path: inset(0 0 0 0);
+    transform: translateX(1px);
+  }
+  100% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+    transform: none;
+    filter: brightness(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boot,
+  .boot-crest,
+  .boot-line,
+  .boot-bar,
+  .glitch-reveal {
+    animation: none !important;
+    transition: none !important;
   }
 }

@@ -9,7 +9,8 @@ export type Tone =
   | "accent"
   | "warn"
   | "error"
-  | "success";
+  | "success"
+  | "brand"; // Manchester United red — for the crest and [MUFC] lines
 
 /**
  * A unit of command output. Structured (not a render callback) so output stays
@@ -48,6 +49,8 @@ export interface CommandContext {
   openCustomizer: () => void;
   /** Clear the custom theme's overrides back to its base palette. */
   resetCustom: () => void;
+  /** Replay the boot sequence. */
+  startBoot: () => void;
   /** The currently active theme name. */
   theme: string;
   /** The command registry — lets commands enumerate their peers (help, autocomplete). */

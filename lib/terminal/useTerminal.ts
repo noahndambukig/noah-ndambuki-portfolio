@@ -1,36 +1,45 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { commands } from "@/lib/commands";
 import { notFound } from "@/lib/commands/notFound";
+import { NAME_BANNER } from "@/lib/content/ascii";
 import { CUSTOM_THEME } from "@/lib/themes/themes";
 import { useTheme } from "@/lib/themes/useTheme";
-import { PROMPT } from "./constants";
+import { BANNER_LINE_ID, PROMPT, TAGLINE } from "./constants";
 import { parse } from "./parse";
 import { createRegistry } from "./registry";
 import type { CommandContext, Line, OutputContent } from "./types";
 
-// Deterministic starting scrollback — static text (no timestamps), so server and
-// client first paint match (no hydration mismatch). Fixed "w" ids avoid clashing
-// with the runtime "l" counter.
-function welcomeLines(): Line[] {
+// The resting scrollback (also the SSR / no-JS state): the name banner, a
+// tagline, and a hint. Static text + fixed ids → server and client first paint
+// match. The banner carries BANNER_LINE_ID so the boot can re-trigger its glitch.
+function restingLines(): Line[] {
   return [
     {
-      id: "w0",
+      id: BANNER_LINE_ID,
       kind: "output",
-      content: { type: "text", text: "ndambuki.terminal — v0.1.0", tone: "accent" },
+      content: { type: "ascii", text: NAME_BANNER, tone: "accent" },
     },
+    { id: "tagline", kind: "output", content: { type: "text", text: TAGLINE, tone: "muted" } },
     {
-      id: "w1",
+      id: "hint",
       kind: "output",
       content: {
         type: "text",
-        text: "type 'help' for commands · 'theme' to change colors",
+        text: "type 'help' for commands · 'boot' to replay · 'mufc' for facts",
         tone: "muted",
       },
     },
-    { id: "w2", kind: "output", content: { type: "spacer" } },
+    { id: "rest-space", kind: "output", content: { type: "spacer" } },
   ];
+}
+
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
 }
 
 export function useTerminal() {
@@ -45,29 +54,49 @@ export function useTerminal() {
     hasCustomOverrides,
   } = useTheme();
 
-  const [lines, setLines] = useState<Line[]>(welcomeLines);
+  const [lines, setLines] = useState<Line[]>(restingLines);
   const [input, setInput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [customizerOpen, setCustomizerOpen] = useState(false);
 
-  // Per-instance id counter (hot-reload safe; resets cleanly each mount).
+  // Boot state. `booting` starts false (so SSR/no-JS render the resting state and
+  // there is no hydration mismatch); a mount effect starts it on the client.
+  const [booting, setBooting] = useState(false);
+  const [bootReveal, setBootReveal] = useState(0);
+
   const idRef = useRef(0);
   const nextId = useCallback(() => `l${idRef.current++}`, []);
 
-  // Submitted-command ring for ↑/↓ navigation, plus a non-state cursor.
   const historyRef = useRef<string[]>([]);
   const historyIndexRef = useRef<number | null>(null);
+
+  const startBoot = useCallback(() => {
+    // Close the picker so it can't sit (focusable) behind the boot overlay.
+    setCustomizerOpen(false);
+    // Guarantee a banner to glitch-reveal at handoff — e.g. after `clear` wiped it.
+    setLines((prev) =>
+      prev.some((l) => l.id === BANNER_LINE_ID)
+        ? prev
+        : [...restingLines(), ...prev],
+    );
+    setBooting(true);
+  }, []);
+  const completeBoot = useCallback(() => {
+    setBooting(false);
+    setBootReveal((c) => c + 1); // re-key the banner so its glitch-reveal fires
+  }, []);
+
+  // Auto-play the boot on first mount, unless the visitor prefers reduced motion.
+  useEffect(() => {
+    if (!prefersReducedMotion()) startBoot();
+  }, [startBoot]);
 
   const pushOutput = useCallback(
     (out: OutputContent | OutputContent[]) => {
       const arr = Array.isArray(out) ? out : [out];
       setLines((prev) => [
         ...prev,
-        ...arr.map((content) => ({
-          id: nextId(),
-          kind: "output" as const,
-          content,
-        })),
+        ...arr.map((content) => ({ id: nextId(), kind: "output" as const, content })),
       ]);
     },
     [nextId],
@@ -75,22 +104,20 @@ export function useTerminal() {
 
   const clear = useCallback(() => setLines([]), []);
 
-  // Opens the custom-theme picker. Owns the ordering: capture the CURRENT theme,
-  // seed custom from it if there are no overrides yet, THEN switch to custom and
-  // open the panel — so first-time custom seeds from what the visitor was viewing.
+  const handleInput = useCallback((value: string) => {
+    historyIndexRef.current = null;
+    setInput(value);
+  }, []);
+
   const openCustomizer = useCallback(() => {
+    // Capture the active theme BEFORE switching so first-time custom seeds from
+    // what the visitor was viewing, not the custom base.
     if (!hasCustomOverrides()) seedCustomFrom(theme);
     setTheme(CUSTOM_THEME);
     setCustomizerOpen(true);
   }, [hasCustomOverrides, seedCustomFrom, theme, setTheme]);
 
   const closeCustomizer = useCallback(() => setCustomizerOpen(false), []);
-
-  // Typing resets history navigation so the next ↑ starts from the newest entry.
-  const handleInput = useCallback((value: string) => {
-    historyIndexRef.current = null;
-    setInput(value);
-  }, []);
 
   const submit = useCallback(async () => {
     if (isRunning) return;
@@ -123,6 +150,7 @@ export function useTerminal() {
       setTheme,
       openCustomizer,
       resetCustom,
+      startBoot,
       theme,
       registry,
     };
@@ -146,6 +174,7 @@ export function useTerminal() {
     setTheme,
     openCustomizer,
     resetCustom,
+    startBoot,
     theme,
     nextId,
   ]);
@@ -183,6 +212,11 @@ export function useTerminal() {
     historyPrev,
     historyNext,
     clear,
+    // boot
+    booting,
+    completeBoot,
+    bootReveal,
+    startBoot,
     // custom theme picker
     customizerOpen,
     openCustomizer,
