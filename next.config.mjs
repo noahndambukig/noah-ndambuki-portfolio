@@ -1,17 +1,17 @@
 /** @type {import('next').NextConfig} */
 
-// GitHub Pages serves project sites from /<repo>, so we need a basePath in
-// production. Locally (next dev / next build served at root) we want no prefix.
-const isProd = process.env.NODE_ENV === "production";
-const repo = "noah-ndambuki-portfolio";
-const basePath = isProd ? `/${repo}` : "";
+// This site is served from the root of a custom domain (ndambuki.ca) via
+// GitHub Pages, so there is NO path prefix. If you ever drop the custom
+// domain and serve from https://<user>.github.io/<repo>/, set basePath/
+// assetPrefix to "/<repo>" instead.
+const basePath = "";
 
 const nextConfig = {
   // Emit a fully static site into ./out — required for GitHub Pages.
   output: "export",
   basePath,
-  // Expose the basePath to the client so we can build correct asset URLs
-  // (e.g. the generated résumé download) from inside components.
+  // Exposed to the client for building asset URLs (e.g. a résumé download)
+  // from inside components. Empty while served at the domain root.
   env: { NEXT_PUBLIC_BASE_PATH: basePath },
   // GitHub Pages has no image optimization server.
   images: { unoptimized: true },
