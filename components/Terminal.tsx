@@ -14,6 +14,8 @@ export function Terminal() {
   const term = useTerminal();
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const nearBottomRef = useRef(true);
 
   const customResolved = useMemo(
     () => mergeCustomVars(term.customVars),
@@ -30,10 +32,32 @@ export function Terminal() {
     return () => clearInterval(id);
   }, []);
 
-  useEffect(() => {
+  // Track whether the user is at the bottom, so growth doesn't yank them down
+  // when they've scrolled up to read.
+  const onScroll = () => {
     const el = scrollRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [term.lines]);
+    if (el) {
+      nearBottomRef.current = el.scrollHeight - el.clientHeight - el.scrollTop < 40;
+    }
+  };
+
+  // Pin the view to the bottom as content grows — including while the typewriter
+  // reveals text. The scroller has a fixed height, so observe the inner content
+  // wrapper (whose height actually changes), not the scroller itself.
+  useEffect(() => {
+    const scroller = scrollRef.current;
+    const content = contentRef.current;
+    if (!scroller || !content) return;
+    const toBottom = () => {
+      scroller.scrollTop = scroller.scrollHeight;
+    };
+    toBottom();
+    const ro = new ResizeObserver(() => {
+      if (nearBottomRef.current) toBottom();
+    });
+    ro.observe(content);
+    return () => ro.disconnect();
+  }, []);
 
   // Return focus to the input when nothing else owns it.
   useEffect(() => {
@@ -69,39 +93,42 @@ export function Terminal() {
           </header>
 
           <div className="scroll-clip">
-          <div className="scrollback" ref={scrollRef}>
-            {term.lines.map((line) => {
-              if (line.kind === "input") {
-                return (
-                  <div key={line.id} className="line line-input">
-                    <span className="prompt-ps1">{line.prompt}</span>
-                    <span className="line-input-value">{line.value}</span>
-                  </div>
-                );
-              }
-              const isBanner = line.id === BANNER_LINE_ID;
-              const revealed = isBanner && term.bootReveal > 0;
-              return (
-                <div
-                  key={isBanner ? `${line.id}-${term.bootReveal}` : line.id}
-                  className={`line${revealed ? " glitch-reveal" : ""}`}
-                >
-                  <OutputBlock content={line.content} />
-                </div>
-              );
-            })}
+            <div className="scrollback" ref={scrollRef} onScroll={onScroll}>
+              <div className="scrollback-content" ref={contentRef}>
+                {term.lines.map((line) => {
+                  if (line.kind === "input") {
+                    return (
+                      <div key={line.id} className="line line-input">
+                        <span className="prompt-ps1">{line.prompt}</span>
+                        <span className="line-input-value">{line.value}</span>
+                      </div>
+                    );
+                  }
+                  const isBanner = line.id === BANNER_LINE_ID;
+                  const revealed = isBanner && term.bootReveal > 0;
+                  return (
+                    <div
+                      key={isBanner ? `${line.id}-${term.bootReveal}` : line.id}
+                      className={`line${revealed ? " glitch-reveal" : ""}`}
+                    >
+                      <OutputBlock content={line.content} />
+                    </div>
+                  );
+                })}
 
-            <Prompt
-              value={term.input}
-              onChange={term.setInput}
-              onSubmit={term.submit}
-              onHistoryPrev={term.historyPrev}
-              onHistoryNext={term.historyNext}
-              onClear={term.clear}
-              isRunning={term.isRunning || term.booting}
-              inputRef={inputRef}
-            />
-          </div>
+                <Prompt
+                  value={term.input}
+                  onChange={term.setInput}
+                  onSubmit={term.submit}
+                  onComplete={term.complete}
+                  onHistoryPrev={term.historyPrev}
+                  onHistoryNext={term.historyNext}
+                  onClear={term.clear}
+                  isRunning={term.isRunning || term.booting}
+                  inputRef={inputRef}
+                />
+              </div>
+            </div>
           </div>
 
           <footer className="hint">type &apos;help&apos; to begin</footer>

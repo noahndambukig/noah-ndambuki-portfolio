@@ -66,8 +66,9 @@ export interface Command {
   usage?: string;
   /** Runnable but excluded from `help`/autocomplete (e.g. easter eggs). */
   hidden?: boolean;
-  /** Optional argument autocompletion (wired in Step 4). */
-  complete?: (args: string[], ctx: CommandContext) => string[];
+  /** Optional argument autocompletion. `ctx` is optional — completion runs it
+   *  without one today, but the param is kept for future context-aware completers. */
+  complete?: (args: string[], ctx?: CommandContext) => string[];
   run: (
     ctx: CommandContext,
   ) =>

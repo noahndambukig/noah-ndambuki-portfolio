@@ -8,7 +8,7 @@ export function OutputBlock({ content }: { content: OutputContent }) {
     case "text":
       return (
         <div className={`ob-text tone-${content.tone ?? "default"}`}>
-          <Typewriter text={content.text} />
+          <Typewriter text={content.text} animate={content.animate} />
         </div>
       );
 

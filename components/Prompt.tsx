@@ -7,6 +7,7 @@ interface PromptProps {
   value: string;
   onChange: (value: string) => void;
   onSubmit: () => void;
+  onComplete: () => void;
   onHistoryPrev: () => void;
   onHistoryNext: () => void;
   onClear: () => void;
@@ -18,6 +19,7 @@ export function Prompt({
   value,
   onChange,
   onSubmit,
+  onComplete,
   onHistoryPrev,
   onHistoryNext,
   onClear,
@@ -37,8 +39,10 @@ export function Prompt({
     } else if (e.key === "l" && e.ctrlKey) {
       e.preventDefault();
       onClear();
+    } else if (e.key === "Tab") {
+      e.preventDefault();
+      onComplete();
     }
-    // Tab is intentionally left to the browser for now (autocomplete = Step 4).
   };
 
   return (

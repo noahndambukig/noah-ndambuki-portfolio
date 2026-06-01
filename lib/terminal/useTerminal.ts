@@ -7,6 +7,7 @@ import { NAME_BANNER } from "@/lib/content/ascii";
 import { CUSTOM_THEME } from "@/lib/themes/themes";
 import { useTheme } from "@/lib/themes/useTheme";
 import { BANNER_LINE_ID, PROMPT } from "./constants";
+import { autocomplete } from "./autocomplete";
 import { parse } from "./parse";
 import { createRegistry } from "./registry";
 import type { CommandContext, Line, OutputContent } from "./types";
@@ -108,6 +109,17 @@ export function useTerminal() {
     setInput(value);
   }, []);
 
+  // Tab completion. Applies a completion through handleInput (which resets history
+  // navigation), or prints the ambiguous candidates.
+  const complete = useCallback(() => {
+    const result = autocomplete(input, registry);
+    if (result.completion !== undefined) {
+      handleInput(result.completion);
+    } else if (result.listing?.length) {
+      pushOutput({ type: "text", tone: "muted", text: result.listing.join("  ") });
+    }
+  }, [input, registry, handleInput, pushOutput]);
+
   const openCustomizer = useCallback(() => {
     // Capture the active theme BEFORE switching so first-time custom seeds from
     // what the visitor was viewing, not the custom base.
@@ -206,6 +218,7 @@ export function useTerminal() {
     input,
     setInput: handleInput,
     submit,
+    complete,
     isRunning,
     theme,
     setTheme,
