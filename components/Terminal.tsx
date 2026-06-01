@@ -68,6 +68,7 @@ export function Terminal() {
             </span>
           </header>
 
+          <div className="scroll-clip">
           <div className="scrollback" ref={scrollRef}>
             {term.lines.map((line) => {
               if (line.kind === "input") {
@@ -100,6 +101,7 @@ export function Terminal() {
               isRunning={term.isRunning || term.booting}
               inputRef={inputRef}
             />
+          </div>
           </div>
 
           <footer className="hint">type &apos;help&apos; to begin</footer>

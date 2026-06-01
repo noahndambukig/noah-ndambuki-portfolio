@@ -127,23 +127,32 @@ body {
 /* ------------------------------------------------------------------ *
  * Scrollback + lines                                                  *
  * ------------------------------------------------------------------ */
-.scrollback {
+/* Clip wrapper hides the scrollbar by clipping its gutter — robust even where
+   scrollbar-width / ::-webkit-scrollbar are ignored (some Chromium builds). */
+.scroll-clip {
   flex: 1;
   min-width: 0;
   min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden; /* wide ASCII scrolls within its own block, not the page */
-  padding-right: 0.5rem;
-  scrollbar-width: thin;
-  scrollbar-color: var(--fg-dim) transparent;
+  overflow: hidden;
+}
+
+.scrollback {
+  height: 100%;
+  box-sizing: border-box;
+  /* Wider than the clip by a gutter, so the scrollbar sits in the clipped area. */
+  width: calc(100% + 24px);
+  padding-right: 24px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  /* Best-effort native hide too (harmless where honored). */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .scrollback::-webkit-scrollbar {
-  width: 8px;
-}
-.scrollback::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--fg-dim) 60%, transparent);
-  border-radius: 4px;
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .line {
@@ -276,7 +285,10 @@ body {
   font-size: clamp(6px, 2.4vw, 15px);
   line-height: 1.05;
   white-space: pre;
+  /* overflow-x:auto would force overflow-y to auto too, which gives the wide
+     banner a stray vertical scrollbar from sub-pixel overflow — pin y to hidden. */
   overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .ob-link {

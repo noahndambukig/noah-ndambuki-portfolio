@@ -6,7 +6,7 @@ import { notFound } from "@/lib/commands/notFound";
 import { NAME_BANNER } from "@/lib/content/ascii";
 import { CUSTOM_THEME } from "@/lib/themes/themes";
 import { useTheme } from "@/lib/themes/useTheme";
-import { BANNER_LINE_ID, PROMPT, TAGLINE } from "./constants";
+import { BANNER_LINE_ID, PROMPT } from "./constants";
 import { parse } from "./parse";
 import { createRegistry } from "./registry";
 import type { CommandContext, Line, OutputContent } from "./types";
@@ -21,7 +21,6 @@ function restingLines(): Line[] {
       kind: "output",
       content: { type: "ascii", text: NAME_BANNER, tone: "accent" },
     },
-    { id: "tagline", kind: "output", content: { type: "text", text: TAGLINE, tone: "muted" } },
     {
       id: "hint",
       kind: "output",
