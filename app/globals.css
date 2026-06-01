@@ -1,3 +1,6 @@
+/* ------------------------------------------------------------------ *
+ * Base reset                                                          *
+ * ------------------------------------------------------------------ */
 *,
 *::before,
 *::after {
@@ -11,10 +14,499 @@ body {
   height: 100%;
 }
 
+/* Theme token VALUES are injected from lib/themes/themes.ts (single source).
+   This file only consumes var(--token); it never defines theme colors. */
+
 body {
-  background: #000;
-  color: #e6e6e6;
-  font-family: ui-monospace, "Cascadia Code", "JetBrains Mono", "Fira Code",
-    "SF Mono", Menlo, Consolas, monospace;
+  height: 100dvh;
+  overflow: hidden;
+  color: var(--fg);
+  background:
+    radial-gradient(120% 120% at 50% 0%, var(--bg-lift), var(--bg) 70%);
+  font-family: var(--font-plex-mono), ui-monospace, "Cascadia Code",
+    "JetBrains Mono", Menlo, Consolas, monospace;
+  font-size: 15px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--selection);
+}
+
+/* ------------------------------------------------------------------ *
+ * Screen shell                                                        *
+ * ------------------------------------------------------------------ */
+.crt {
+  height: 100dvh;
+  width: 100%;
+  display: flex;
+  cursor: text;
+}
+
+.screen {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: clamp(0.75rem, 2.5vw, 2rem);
+  /* Phosphor glow on everything inside the screen. */
+  text-shadow: 0 0 6px var(--glow);
+}
+
+/* One-shot CRT power-on: a bright collapsed scanline that snaps open. */
+.power-on {
+  animation: power-on 720ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  transform-origin: center;
+}
+
+@keyframes power-on {
+  0% {
+    transform: scaleY(0.004);
+    filter: brightness(3.5);
+    opacity: 0;
+  }
+  9% {
+    transform: scaleY(0.02);
+    opacity: 1;
+  }
+  45% {
+    transform: scaleY(1);
+    filter: brightness(1.5);
+  }
+  100% {
+    transform: scaleY(1);
+    filter: brightness(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .power-on {
+    animation: none;
+  }
+}
+
+/* Vignette + inner bezel so it reads as a screen, not a webpage. */
+.vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(
+    130% 130% at 50% 50%,
+    transparent 55%,
+    rgba(0, 0, 0, 0.45) 100%
+  );
+  box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.55);
+  z-index: 2;
+}
+
+/* ------------------------------------------------------------------ *
+ * Status bar                                                          *
+ * ------------------------------------------------------------------ */
+.statusbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 1ch;
+  flex-wrap: wrap;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--fg-dim) 35%, transparent);
+  color: var(--fg-dim);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.statusbar-clock {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------ *
+ * Scrollback + lines                                                  *
+ * ------------------------------------------------------------------ */
+.scrollback {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--fg-dim) transparent;
+}
+
+.scrollback::-webkit-scrollbar {
+  width: 8px;
+}
+.scrollback::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--fg-dim) 60%, transparent);
+  border-radius: 4px;
+}
+
+.line {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.line-input {
+  display: flex;
+  gap: 0.75ch;
+}
+
+.line-input-value {
+  color: var(--fg);
+}
+
+/* ------------------------------------------------------------------ *
+ * Prompt + caret                                                      *
+ * ------------------------------------------------------------------ */
+.prompt-line {
+  display: flex;
+  gap: 0.75ch;
+  align-items: center;
+}
+
+.prompt-ps1 {
+  color: var(--accent);
+  white-space: nowrap;
+  flex: none;
+}
+
+.prompt-field {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.prompt-input {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--fg);
+  caret-color: transparent; /* native caret hidden; block caret drawn below */
+  font: inherit;
+  text-shadow: inherit;
+}
+
+.prompt-input:disabled {
+  opacity: 0.7;
+}
+
+.prompt-caret {
+  position: absolute;
+  top: 50%;
+  width: 0.6ch;
+  height: 1.15em;
+  transform: translateY(-50%);
+  background: var(--fg);
+  box-shadow: 0 0 8px var(--glow);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.prompt-input:focus + .prompt-caret {
+  opacity: 1;
+  animation: caret-blink 1.05s steps(1) infinite;
+}
+
+.prompt-caret[data-running] {
+  opacity: 0.6;
+  animation: none;
+  background: var(--warn);
+}
+
+@keyframes caret-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Hint footer                                                         *
+ * ------------------------------------------------------------------ */
+.hint {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid color-mix(in srgb, var(--fg-dim) 25%, transparent);
+  color: var(--fg-dim);
+  font-size: 0.8rem;
+}
+
+/* ------------------------------------------------------------------ *
+ * Output blocks                                                       *
+ * ------------------------------------------------------------------ */
+.tone-default {
+  color: var(--fg);
+}
+.tone-muted {
+  color: var(--fg-dim);
+}
+.tone-accent {
+  color: var(--accent);
+}
+.tone-warn {
+  color: var(--warn);
+}
+.tone-error {
+  color: var(--error);
+}
+.tone-success {
+  color: var(--success);
+}
+
+.ob-ascii {
+  margin: 0;
+  font: inherit;
+  line-height: 1.1;
+}
+
+.ob-link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.ob-link:hover {
+  filter: brightness(1.2);
+}
+
+.ob-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.ob-table {
+  display: inline-grid;
+  column-gap: 2ch;
+  row-gap: 0.15em;
+  align-items: baseline;
+}
+
+/* First column (command/theme name) is highlighted — assumes 2-column tables. */
+.ob-table .ob-cell:nth-child(2n + 1) {
+  color: var(--accent);
+}
+
+.ob-keyval {
+  display: inline-grid;
+  row-gap: 0.15em;
+}
+.ob-keyval-row {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: 2ch;
+}
+
+/* ------------------------------------------------------------------ *
+ * Status-bar theme button (opens the custom picker)                   *
+ * ------------------------------------------------------------------ */
+.statusbar-theme {
+  font: inherit;
+  letter-spacing: inherit;
+  color: var(--fg-dim);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline dotted
+    color-mix(in srgb, var(--fg-dim) 55%, transparent);
+  text-underline-offset: 3px;
+}
+.statusbar-theme:hover,
+.statusbar-theme:focus-visible {
+  color: var(--accent);
+  outline: none;
+}
+
+/* ------------------------------------------------------------------ *
+ * Custom theme picker — a docked CRT control panel                    *
+ * ------------------------------------------------------------------ */
+.editor-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(1px);
+  animation: scrim-in 200ms ease both;
+}
+
+@keyframes scrim-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.theme-editor {
+  position: fixed;
+  inset: 0 0 0 auto;
+  z-index: 21;
+  width: clamp(280px, 92vw, 360px);
+  display: flex;
+  flex-direction: column;
+  padding: 1.1rem clamp(0.85rem, 2vw, 1.3rem);
+  color: var(--fg);
+  background: color-mix(in srgb, var(--bg) 90%, black);
+  border-left: 1px solid color-mix(in srgb, var(--fg-dim) 50%, transparent);
+  box-shadow:
+    -22px 0 60px rgba(0, 0, 0, 0.55),
+    inset 1px 0 0 color-mix(in srgb, var(--fg) 12%, transparent);
+  text-shadow: 0 0 6px var(--glow);
+  outline: none;
+  animation: editor-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes editor-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.editor-title {
+  color: var(--accent);
+  letter-spacing: 0.05em;
+}
+.editor-x {
+  font: inherit;
+  color: var(--fg-dim);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.editor-x:hover,
+.editor-x:focus-visible {
+  color: var(--accent);
+  outline: none;
+}
+
+.editor-rows {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-right: 0.25rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--fg-dim) transparent;
+}
+
+.editor-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+.editor-label {
+  color: var(--fg-dim);
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+}
+
+.editor-well {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 2.2rem;
+  height: 1.5rem;
+  padding: 0;
+  background: none;
+  border: 1px solid color-mix(in srgb, var(--fg-dim) 60%, transparent);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.editor-well::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+.editor-well::-webkit-color-swatch {
+  border: none;
+  border-radius: 2px;
+}
+.editor-well::-moz-color-swatch {
+  border: none;
+  border-radius: 2px;
+}
+.editor-well:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+.editor-hex {
+  width: 8.5ch;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--fg);
+  background: color-mix(in srgb, var(--fg) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fg-dim) 45%, transparent);
+  border-radius: 4px;
+  padding: 0.2rem 0.4rem;
+  text-transform: lowercase;
+  caret-color: var(--accent);
+}
+.editor-hex:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.editor-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid color-mix(in srgb, var(--fg-dim) 25%, transparent);
+}
+.editor-note {
+  color: var(--fg-dim);
+  font-size: 0.75rem;
+}
+.editor-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.editor-btn {
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--fg);
+  background: none;
+  border: 1px solid color-mix(in srgb, var(--fg-dim) 55%, transparent);
+  border-radius: 4px;
+  padding: 0.25rem 0.7rem;
+  cursor: pointer;
+  text-transform: lowercase;
+}
+.editor-btn:hover,
+.editor-btn:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .editor-scrim,
+  .theme-editor {
+    animation: none;
+  }
 }
