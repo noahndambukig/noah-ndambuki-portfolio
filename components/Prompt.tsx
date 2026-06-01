@@ -5,6 +5,7 @@ import { PROMPT } from "@/lib/terminal/constants";
 
 interface PromptProps {
   value: string;
+  suggestion: string;
   onChange: (value: string) => void;
   onSubmit: () => void;
   onComplete: () => void;
@@ -17,6 +18,7 @@ interface PromptProps {
 
 export function Prompt({
   value,
+  suggestion,
   onChange,
   onSubmit,
   onComplete,
@@ -65,12 +67,25 @@ export function Prompt({
           // eslint-disable-next-line jsx-a11y/no-autofocus
           autoFocus
         />
+        {/* Inline "ghost" suggestion: the unique completion's remaining chars,
+            dimmed, starting right where the typed text ends. Hit Tab to accept. */}
+        {suggestion && (
+          <span
+            className="prompt-ghost"
+            style={{ left: `${value.length}ch` }}
+            aria-hidden="true"
+          >
+            {suggestion}
+          </span>
+        )}
         {/* Block caret. Monospace makes a `ch`-offset reliable; the real input
-            above keeps the caret transparent and owns focus/selection. */}
+            above keeps the caret transparent and owns focus/selection. Slims to a
+            bar when a ghost suggestion follows so the suggestion stays readable. */}
         <span
           className="prompt-caret"
           style={{ left: `${value.length}ch` }}
           data-running={isRunning || undefined}
+          data-thin={suggestion ? true : undefined}
           aria-hidden="true"
         />
       </span>

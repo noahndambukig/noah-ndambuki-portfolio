@@ -59,3 +59,37 @@ export function autocomplete(input: string, registry: Registry): CompleteResult 
   if (lcp.length > partial.length) return { completion: rebuild(lcp, false) };
   return { listing: candidates };
 }
+
+/**
+ * The "ghost" suffix to show inline after the input — ONLY when exactly one
+ * candidate remains and it strictly extends what's typed. Empty string otherwise
+ * (ambiguous, no match, or already complete). This is what Tab would fill in.
+ */
+export function suggest(input: string, registry: Registry): string {
+  const hasTrailingSpace = /\s$/.test(input);
+  const trimmed = input.trim();
+  const tokens = trimmed.length ? trimmed.split(/\s+/) : [];
+
+  // command name
+  if (tokens.length <= 1 && !hasTrailingSpace) {
+    const prefix = (tokens[0] ?? "").toLowerCase();
+    if (!prefix) return "";
+    const matches = registry.names().filter((n) => n.startsWith(prefix));
+    return matches.length === 1 && matches[0].length > prefix.length
+      ? matches[0].slice(prefix.length)
+      : "";
+  }
+
+  // argument of a known command
+  const cmd = registry.lookup(tokens[0].toLowerCase());
+  if (!cmd?.complete) return "";
+  const partial = hasTrailingSpace ? "" : tokens[tokens.length - 1];
+  if (!partial) return "";
+  const argsBefore = hasTrailingSpace ? tokens.slice(1) : tokens.slice(1, -1);
+  const candidates = cmd.complete([...argsBefore, partial]);
+  return candidates.length === 1 &&
+    candidates[0].length > partial.length &&
+    candidates[0].toLowerCase().startsWith(partial.toLowerCase())
+    ? candidates[0].slice(partial.length)
+    : "";
+}

@@ -7,7 +7,7 @@ import { NAME_BANNER } from "@/lib/content/ascii";
 import { CUSTOM_THEME } from "@/lib/themes/themes";
 import { useTheme } from "@/lib/themes/useTheme";
 import { BANNER_LINE_ID, PROMPT } from "./constants";
-import { autocomplete } from "./autocomplete";
+import { autocomplete, suggest } from "./autocomplete";
 import { parse } from "./parse";
 import { createRegistry } from "./registry";
 import type { CommandContext, Line, OutputContent } from "./types";
@@ -120,6 +120,9 @@ export function useTerminal() {
     }
   }, [input, registry, handleInput, pushOutput]);
 
+  // Ghost suffix shown inline after the input when exactly one completion remains.
+  const suggestion = useMemo(() => suggest(input, registry), [input, registry]);
+
   const openCustomizer = useCallback(() => {
     // Capture the active theme BEFORE switching so first-time custom seeds from
     // what the visitor was viewing, not the custom base.
@@ -219,6 +222,7 @@ export function useTerminal() {
     setInput: handleInput,
     submit,
     complete,
+    suggestion,
     isRunning,
     theme,
     setTheme,

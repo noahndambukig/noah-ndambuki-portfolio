@@ -118,6 +118,7 @@ export function Terminal() {
 
                 <Prompt
                   value={term.input}
+                  suggestion={term.suggestion}
                   onChange={term.setInput}
                   onSubmit={term.submit}
                   onComplete={term.complete}
