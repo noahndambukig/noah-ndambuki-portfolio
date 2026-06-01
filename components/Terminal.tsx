@@ -8,6 +8,7 @@ import { BootSequence } from "./BootSequence";
 import { OutputBlock } from "./OutputBlock";
 import { Prompt } from "./Prompt";
 import { ThemeEditor } from "./ThemeEditor";
+import { ThemeMenu } from "./ThemeMenu";
 
 export function Terminal() {
   const term = useTerminal();
@@ -56,14 +57,12 @@ export function Terminal() {
         <div className="screen">
           <header className="statusbar">
             <span className="statusbar-host">{USER_HOST}</span>
-            <button
-              className="statusbar-theme"
-              type="button"
-              onClick={term.openCustomizer}
-              aria-label="Open the custom theme color picker"
-            >
-              theme: {term.theme}
-            </button>
+            <ThemeMenu
+              current={term.theme}
+              onSelectTheme={term.setTheme}
+              onOpenCustomizer={term.openCustomizer}
+              customVars={customResolved}
+            />
             <span className="statusbar-clock" suppressHydrationWarning>
               {clock ?? "--:--:--"}
             </span>

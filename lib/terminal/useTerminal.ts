@@ -209,6 +209,7 @@ export function useTerminal() {
     submit,
     isRunning,
     theme,
+    setTheme,
     historyPrev,
     historyNext,
     clear,

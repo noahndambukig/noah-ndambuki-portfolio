@@ -4,18 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { UNITED_CREST } from "@/lib/content/ascii";
 import { BOOT_STEPS, FACT_SLOTS, type BootTag } from "@/lib/content/bootScript";
 import { pickFacts } from "@/lib/content/mufc";
+import { PROMPT } from "@/lib/terminal/constants";
 
 interface BootLine {
   text: string;
   tag: BootTag;
 }
-
-const TAG_LABEL: Record<BootTag, string> = {
-  ok: "[  OK  ]",
-  warn: "[ WARN ]",
-  info: "[ ---- ]",
-  mufc: "[ MUFC ]",
-};
 
 const SPLASH_HOLD = 1100; // crest-only splash time (ms)
 const PER_LINE = 230; // delay between log lines (ms)
@@ -31,7 +25,7 @@ export function BootSequence({ onComplete }: { onComplete: () => void }) {
   const doneRef = useRef(false);
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
-  const skipRef = useRef<HTMLButtonElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Idempotent finish — used by the scheduled end, the skip button, and the
   // global key/pointer skip. Guarded so it only fires once.
@@ -84,20 +78,31 @@ export function BootSequence({ onComplete }: { onComplete: () => void }) {
     return () => timers.current.forEach((id) => window.clearTimeout(id));
   }, [finish]);
 
-  // Skip on any key / pointer, and move focus to the Skip control on mount so
-  // keyboard / AT users can discover and operate it.
+  // Move focus into the overlay (AT context), and allow skipping on any
+  // key/pointer — but ARM the global skip a beat after mount so the keypress that
+  // launched the boot (e.g. Enter from the `boot` command) can't instantly dismiss
+  // it. Without this, `boot` flashes the overlay away before it can play.
   useEffect(() => {
-    skipRef.current?.focus();
-    window.addEventListener("keydown", finish);
-    window.addEventListener("pointerdown", finish);
+    containerRef.current?.focus();
+    let armed = false;
+    const armTimer = window.setTimeout(() => {
+      armed = true;
+    }, 450);
+    const onSkip = () => {
+      if (armed) finish();
+    };
+    window.addEventListener("keydown", onSkip);
+    window.addEventListener("pointerdown", onSkip);
     return () => {
-      window.removeEventListener("keydown", finish);
-      window.removeEventListener("pointerdown", finish);
+      window.clearTimeout(armTimer);
+      window.removeEventListener("keydown", onSkip);
+      window.removeEventListener("pointerdown", onSkip);
     };
   }, [finish]);
 
   return (
     <div
+      ref={containerRef}
       className={`boot power-on${exiting ? " boot-exit" : ""}`}
       role="dialog"
       aria-modal="true"
@@ -111,7 +116,7 @@ export function BootSequence({ onComplete }: { onComplete: () => void }) {
       <div className="boot-log" aria-hidden="true">
         {shown.map((line, i) => (
           <div key={i} className={`boot-line boot-${line.tag}`}>
-            <span className="boot-tag">{TAG_LABEL[line.tag]}</span>
+            <span className="boot-prompt">{PROMPT}</span>
             <span className="boot-text">{line.text}</span>
           </div>
         ))}
@@ -121,12 +126,7 @@ export function BootSequence({ onComplete }: { onComplete: () => void }) {
         <div className="boot-progress" aria-hidden="true">
           <span className="boot-bar" style={{ width: `${progress}%` }} />
         </div>
-        <button
-          ref={skipRef}
-          type="button"
-          className="boot-skip"
-          onClick={finish}
-        >
+        <button type="button" className="boot-skip" onClick={finish}>
           press any key or tap to skip
         </button>
       </div>

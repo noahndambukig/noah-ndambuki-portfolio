@@ -138,7 +138,7 @@ export const THEMES: Record<string, Theme> = {
   },
 };
 
-export const DEFAULT_THEME = "matrix";
+export const DEFAULT_THEME = "crimson";
 export const CUSTOM_THEME = "custom";
 export const CUSTOM_STORAGE_KEY = "term-theme-custom";
 
