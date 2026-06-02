@@ -250,6 +250,200 @@ body {
   pointer-events: none;
 }
 
+/* ------------------------------------------------------------------ *
+ * Clickable bubbles (cards)                                           *
+ * ------------------------------------------------------------------ */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 0.7rem;
+  margin: 0.4rem 0;
+  max-width: 920px;
+}
+.card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  text-align: left;
+  padding: 0.8rem 0.9rem;
+  font: inherit;
+  color: var(--fg);
+  background: color-mix(in srgb, var(--fg) 4%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fg-dim) 45%, transparent);
+  border-radius: 10px;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    background 120ms ease,
+    transform 120ms ease;
+}
+.card:hover,
+.card:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  transform: translateY(-1px);
+}
+.card-icon {
+  flex: none;
+  margin-top: 1px;
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+}
+.card-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.card-name {
+  color: var(--accent);
+}
+.card-desc {
+  color: var(--fg-dim);
+  font-size: 0.85rem;
+}
+
+/* ------------------------------------------------------------------ *
+ * Project detail overlay                                              *
+ * ------------------------------------------------------------------ */
+.detail {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  color: var(--fg);
+  background: radial-gradient(120% 120% at 50% 0%, var(--bg-lift), var(--bg) 72%);
+  text-shadow: 0 0 6px var(--glow);
+  animation: detail-in 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes detail-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.detail-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1ch;
+  padding: clamp(0.7rem, 2.2vw, 1.1rem) clamp(0.9rem, 3vw, 2rem);
+  border-bottom: 1px solid color-mix(in srgb, var(--fg-dim) 35%, transparent);
+}
+.detail-crumb {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--fg-dim);
+  letter-spacing: 0.03em;
+}
+.detail-crumb-leaf {
+  color: var(--accent);
+}
+.detail-back {
+  flex: none;
+  width: 2.2rem;
+  height: 2.2rem;
+  display: grid;
+  place-items: center;
+  font: inherit;
+  font-size: 1.15rem;
+  color: var(--fg);
+  background: none;
+  border: 1px solid color-mix(in srgb, var(--fg-dim) 45%, transparent);
+  border-radius: 50%;
+  cursor: pointer;
+}
+.detail-back:hover,
+.detail-back:focus-visible {
+  outline: none;
+  color: var(--accent);
+  border-color: var(--accent);
+}
+/* Gutter-clip to hide the scrollbar (same trick as the terminal). */
+.detail-scroll-clip {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.detail-body {
+  height: 100%;
+  box-sizing: border-box;
+  width: calc(100% + 24px);
+  overflow-y: scroll;
+  padding: clamp(1rem, 3vw, 2rem);
+  padding-right: calc(clamp(1rem, 3vw, 2rem) + 24px);
+  scrollbar-width: none;
+}
+.detail-title {
+  color: var(--accent);
+  font-size: clamp(1.3rem, 3vw, 1.9rem);
+  margin: 0 0 0.25rem;
+}
+.detail-blurb {
+  margin: 0 0 0.4rem;
+}
+.detail-meta {
+  color: var(--fg-dim);
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+.detail-links {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.detail-h {
+  color: var(--accent);
+  font-size: 1.1rem;
+  margin: 1.6rem 0 0.5rem;
+}
+.detail-p {
+  line-height: 1.7;
+  margin: 0 0 0.9rem;
+  max-width: 72ch;
+}
+.detail-ul {
+  margin: 0 0 1rem;
+  padding-left: 1.25rem;
+  line-height: 1.7;
+  max-width: 72ch;
+}
+.detail-ul li {
+  margin-bottom: 0.3rem;
+}
+.detail-fig {
+  margin: 0 0 1.5rem;
+}
+.detail-img {
+  max-width: 100%;
+  border: 1px solid color-mix(in srgb, var(--fg-dim) 40%, transparent);
+  border-radius: 8px;
+}
+.detail-cap {
+  margin-top: 0.4rem;
+  color: var(--fg-dim);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .detail {
+    animation: none;
+  }
+  .card {
+    transition: none;
+  }
+}
+
 @keyframes caret-blink {
   0%,
   50% {

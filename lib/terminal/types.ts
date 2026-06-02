@@ -23,7 +23,13 @@ export type OutputContent =
   | { type: "keyval"; pairs: Array<[string, string]>; tone?: Tone }
   | { type: "table"; columns?: string[]; rows: string[][]; tone?: Tone }
   | { type: "group"; items: OutputContent[] } // compose several blocks as one unit
-  | { type: "spacer"; lines?: number };
+  | { type: "spacer"; lines?: number }
+  // Clickable bubbles. `run` is the command executed on click (serializable — no
+  // functions). Rendered by OutputBlock via the terminal-actions context.
+  | {
+      type: "cards";
+      items: Array<{ icon?: string; name: string; desc: string; run: string }>;
+    };
 
 /** A rendered line in the scrollback: either the echoed input or command output. */
 export type Line =
@@ -51,6 +57,8 @@ export interface CommandContext {
   resetCustom: () => void;
   /** Replay the boot sequence. */
   startBoot: () => void;
+  /** Open a project's detail view by slug. */
+  openProject: (slug: string) => void;
   /** The currently active theme name. */
   theme: string;
   /** The command registry — lets commands enumerate their peers (help, autocomplete). */

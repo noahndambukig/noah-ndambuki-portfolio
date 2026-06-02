@@ -1,22 +1,40 @@
 import type { Command } from "@/lib/terminal/types";
+import { about } from "./about";
 import { banner } from "./banner";
 import { boot } from "./boot";
 import { clear } from "./clear";
+import { contact } from "./contact";
 import { customize } from "./customize";
 import { echo } from "./echo";
+import { experience } from "./experience";
 import { help } from "./help";
+import { home } from "./home";
+import { email, github, linkedin } from "./links";
 import { mufc } from "./mufc";
+import { open } from "./open";
+import { projects } from "./projects";
+import { resume } from "./resume";
 import { theme } from "./theme";
 
 // The canonical command list. Add a command by importing it and appending here;
-// it will automatically appear in `help` and (later) tab-completion.
+// it auto-appears in help, tab-completion, and ghost suggestions.
 export const commands: Command[] = [
   help,
-  clear,
+  home,
+  about,
+  projects,
+  open,
+  experience,
+  contact,
+  resume,
+  github,
+  linkedin,
+  email,
   theme,
   customize,
   banner,
   mufc,
   boot,
+  clear,
   echo,
 ];

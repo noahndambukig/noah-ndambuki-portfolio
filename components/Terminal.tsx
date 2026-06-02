@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { projects } from "@/lib/content/projects";
 import { BANNER_LINE_ID, USER_HOST } from "@/lib/terminal/constants";
 import { useTerminal } from "@/lib/terminal/useTerminal";
 import { mergeCustomVars } from "@/lib/themes/themes";
 import { BootSequence } from "./BootSequence";
 import { OutputBlock } from "./OutputBlock";
+import { ProjectDetail } from "./ProjectDetail";
 import { Prompt } from "./Prompt";
+import { TerminalActionsContext } from "./TerminalActions";
 import { ThemeEditor } from "./ThemeEditor";
 import { ThemeMenu } from "./ThemeMenu";
 
@@ -21,6 +24,13 @@ export function Terminal() {
     () => mergeCustomVars(term.customVars),
     [term.customVars],
   );
+
+  const detailOpen = term.view.kind === "project";
+  const activeProject = useMemo(() => {
+    const v = term.view;
+    return v.kind === "project" ? projects.find((p) => p.slug === v.slug) : undefined;
+  }, [term.view]);
+  const actions = useMemo(() => ({ runCommand: term.runCommand }), [term.runCommand]);
 
   // Clock renders a stable placeholder on the server + first client paint, then
   // ticks post-mount — no SSR timestamp, so no hydration mismatch.
@@ -59,20 +69,21 @@ export function Terminal() {
     return () => ro.disconnect();
   }, []);
 
-  // Return focus to the input when nothing else owns it.
+  // Return focus to the input when nothing else owns it (also restores focus when
+  // a project detail view closes).
   useEffect(() => {
-    if (!term.isRunning && !term.customizerOpen && !term.booting) {
+    if (!term.isRunning && !term.customizerOpen && !term.booting && !detailOpen) {
       inputRef.current?.focus();
     }
-  }, [term.isRunning, term.customizerOpen, term.booting]);
+  }, [term.isRunning, term.customizerOpen, term.booting, detailOpen]);
 
   return (
-    <>
+    <TerminalActionsContext.Provider value={actions}>
       <main
         className="crt"
-        inert={term.booting}
+        inert={term.booting || detailOpen}
         onMouseDown={(e) => {
-          if (term.booting) return;
+          if (term.booting || detailOpen) return;
           if (window.getSelection()?.toString()) return;
           if ((e.target as HTMLElement).closest("input, button, a")) return;
           inputRef.current?.focus();
@@ -146,6 +157,10 @@ export function Terminal() {
       />
 
       {term.booting && <BootSequence onComplete={term.completeBoot} />}
-    </>
+
+      {detailOpen && activeProject && (
+        <ProjectDetail project={activeProject} onClose={term.closeView} />
+      )}
+    </TerminalActionsContext.Provider>
   );
 }

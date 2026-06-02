@@ -1,4 +1,7 @@
+"use client";
+
 import type { OutputContent } from "@/lib/terminal/types";
+import { Card } from "./Card";
 import { Typewriter } from "./Typewriter";
 
 // The single place structured OutputContent becomes JSX. Keeping all React here
@@ -58,6 +61,21 @@ export function OutputBlock({ content }: { content: OutputContent }) {
               </span>
             )),
           )}
+        </div>
+      );
+
+    case "cards":
+      return (
+        <div className="card-grid">
+          {content.items.map((item, i) => (
+            <Card
+              key={i}
+              icon={item.icon}
+              name={item.name}
+              desc={item.desc}
+              run={item.run}
+            />
+          ))}
         </div>
       );
 

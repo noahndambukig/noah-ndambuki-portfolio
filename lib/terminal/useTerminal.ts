@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { commands } from "@/lib/commands";
 import { notFound } from "@/lib/commands/notFound";
 import { NAME_BANNER } from "@/lib/content/ascii";
+import { launcherCards } from "@/lib/content/launcher";
 import { CUSTOM_THEME } from "@/lib/themes/themes";
 import { useTheme } from "@/lib/themes/useTheme";
 import { BANNER_LINE_ID, PROMPT } from "./constants";
@@ -15,25 +16,33 @@ import type { CommandContext, Line, OutputContent } from "./types";
 // The resting scrollback (also the SSR / no-JS state): the name banner, a
 // tagline, and a hint. Static text + fixed ids → server and client first paint
 // match. The banner carries BANNER_LINE_ID so the boot can re-trigger its glitch.
+function bannerLine(): Line {
+  return {
+    id: BANNER_LINE_ID,
+    kind: "output",
+    content: { type: "ascii", text: NAME_BANNER, tone: "accent" },
+  };
+}
+
 function restingLines(): Line[] {
   return [
-    {
-      id: BANNER_LINE_ID,
-      kind: "output",
-      content: { type: "ascii", text: NAME_BANNER, tone: "accent" },
-    },
+    bannerLine(),
     {
       id: "hint",
       kind: "output",
       content: {
         type: "text",
-        text: "type 'help' for commands · 'boot' to replay · 'mufc' for facts",
+        text: "type 'help' for commands, or click a card below",
         tone: "muted",
       },
     },
+    { id: "launcher", kind: "output", content: launcherCards },
     { id: "rest-space", kind: "output", content: { type: "spacer" } },
   ];
 }
+
+// Which "screen" is showing: the terminal home, or a project's detail page.
+type View = { kind: "home" } | { kind: "project"; slug: string };
 
 function prefersReducedMotion(): boolean {
   return (
@@ -58,6 +67,7 @@ export function useTerminal() {
   const [input, setInput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [customizerOpen, setCustomizerOpen] = useState(false);
+  const [view, setView] = useState<View>({ kind: "home" });
 
   // Boot state. `booting` starts false (so SSR/no-JS render the resting state and
   // there is no hydration mismatch); a mount effect starts it on the client.
@@ -74,10 +84,9 @@ export function useTerminal() {
     // Close the picker so it can't sit (focusable) behind the boot overlay.
     setCustomizerOpen(false);
     // Guarantee a banner to glitch-reveal at handoff — e.g. after `clear` wiped it.
+    // Only the banner (not the whole welcome) so we don't duplicate the launcher/hint.
     setLines((prev) =>
-      prev.some((l) => l.id === BANNER_LINE_ID)
-        ? prev
-        : [...restingLines(), ...prev],
+      prev.some((l) => l.id === BANNER_LINE_ID) ? prev : [bannerLine(), ...prev],
     );
     setBooting(true);
   }, []);
@@ -133,65 +142,85 @@ export function useTerminal() {
 
   const closeCustomizer = useCallback(() => setCustomizerOpen(false), []);
 
-  const submit = useCallback(async () => {
-    if (isRunning) return;
+  const openProject = useCallback((slug: string) => {
+    // Close the picker so the two overlays are never open at once (avoids the
+    // editor staying focusable behind the modal + a single Esc closing both).
+    setCustomizerOpen(false);
+    setView({ kind: "project", slug });
+  }, []);
+  const closeView = useCallback(() => setView({ kind: "home" }), []);
 
-    const rawLine = input;
-    setInput("");
-    historyIndexRef.current = null;
+  // Shared core: echo the line, record it in history, run the command. Used by
+  // both typing (submit) and clicking a bubble (runCommand) — so a click is
+  // identical to typing.
+  const execute = useCallback(
+    async (rawLine: string) => {
+      if (isRunning) return;
+      historyIndexRef.current = null;
 
-    const parsed = parse(rawLine);
+      const parsed = parse(rawLine);
+      setLines((prev) => [
+        ...prev,
+        { id: nextId(), kind: "input", prompt: PROMPT, value: rawLine },
+      ]);
 
-    setLines((prev) => [
-      ...prev,
-      { id: nextId(), kind: "input", prompt: PROMPT, value: rawLine },
-    ]);
+      if (parsed.name === "") return;
+      historyRef.current = [...historyRef.current, rawLine];
 
-    if (parsed.name === "") return;
-    historyRef.current = [...historyRef.current, rawLine];
+      const cmd = registry.lookup(parsed.name);
+      if (!cmd) {
+        pushOutput(notFound(parsed.name));
+        return;
+      }
 
-    const cmd = registry.lookup(parsed.name);
-    if (!cmd) {
-      pushOutput(notFound(parsed.name));
-      return;
-    }
+      const ctx: CommandContext = {
+        args: parsed.args,
+        raw: parsed.raw,
+        print: pushOutput,
+        clear,
+        setTheme,
+        openCustomizer,
+        resetCustom,
+        startBoot,
+        openProject,
+        theme,
+        registry,
+      };
 
-    const ctx: CommandContext = {
-      args: parsed.args,
-      raw: parsed.raw,
-      print: pushOutput,
+      try {
+        setIsRunning(true);
+        const result = await cmd.run(ctx);
+        if (result) pushOutput(result);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        pushOutput({ type: "text", tone: "error", text: `error: ${message}` });
+      } finally {
+        setIsRunning(false);
+      }
+    },
+    [
+      isRunning,
+      registry,
+      pushOutput,
       clear,
       setTheme,
       openCustomizer,
       resetCustom,
       startBoot,
+      openProject,
       theme,
-      registry,
-    };
+      nextId,
+    ],
+  );
 
-    try {
-      setIsRunning(true);
-      const result = await cmd.run(ctx);
-      if (result) pushOutput(result);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      pushOutput({ type: "text", tone: "error", text: `error: ${message}` });
-    } finally {
-      setIsRunning(false);
-    }
-  }, [
-    input,
-    isRunning,
-    registry,
-    pushOutput,
-    clear,
-    setTheme,
-    openCustomizer,
-    resetCustom,
-    startBoot,
-    theme,
-    nextId,
-  ]);
+  const submit = useCallback(() => {
+    const rawLine = input;
+    setInput("");
+    void execute(rawLine);
+  }, [input, execute]);
+
+  // Programmatic run (e.g. clicking a bubble) — goes through the same path.
+  const runCommand = useCallback((command: string) => void execute(command), [execute]);
 
   const historyPrev = useCallback(() => {
     const h = historyRef.current;
@@ -221,6 +250,7 @@ export function useTerminal() {
     input,
     setInput: handleInput,
     submit,
+    runCommand,
     complete,
     suggestion,
     isRunning,
@@ -229,6 +259,10 @@ export function useTerminal() {
     historyPrev,
     historyNext,
     clear,
+    // project detail view
+    view,
+    openProject,
+    closeView,
     // boot
     booting,
     completeBoot,
