@@ -10,8 +10,8 @@ interface BootLine {
   tag: BootTag;
 }
 
-const SPLASH_HOLD = 1100; // crest-only splash time (ms)
-const PER_LINE = 230; // delay between log lines (ms)
+const SPLASH_HOLD = 1100; // crest-only splash time — glitch-in + a beat to stabilise (ms)
+const PER_LINE = 45; // delay between log lines — fast so they flood in (ms)
 const TAIL = 600; // pause after last line before handoff (ms)
 const REDUCED_HOLD = 700; // static hold under reduced motion before handoff (ms)
 
