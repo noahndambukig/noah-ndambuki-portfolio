@@ -3,8 +3,9 @@
 import { Icon } from "./Icon";
 import { useTerminalActions } from "./TerminalActions";
 
-// A clickable "bubble": icon + name + description. Clicking runs `run` as a
-// command (same as typing it). Reused by the home launcher and the projects grid.
+// A clickable "bubble": icon + name + description. Clicking pastes `run` into the
+// prompt (the visitor then presses Enter to run it) — it does not auto-execute.
+// Reused by the home launcher and the projects grid.
 export function Card({
   icon,
   name,
@@ -16,13 +17,13 @@ export function Card({
   desc: string;
   run: string;
 }) {
-  const { runCommand } = useTerminalActions();
+  const { fillCommand } = useTerminalActions();
   return (
     <button
       type="button"
       className="card"
-      onClick={() => runCommand(run)}
-      aria-label={`${name} — ${desc}`}
+      onClick={() => fillCommand(run)}
+      aria-label={`${name} — ${desc} (press Enter to run)`}
     >
       <span className="card-icon">
         <Icon name={icon} />

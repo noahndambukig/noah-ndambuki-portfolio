@@ -41,8 +41,9 @@ function restingLines(): Line[] {
   ];
 }
 
-// Which "screen" is showing: the terminal home, or a project's detail page.
-type View = { kind: "home" } | { kind: "project"; slug: string };
+// Which "screen" is showing: the terminal home, a project's detail page, or the
+// snake game overlay.
+type View = { kind: "home" } | { kind: "project"; slug: string } | { kind: "snake" };
 
 function prefersReducedMotion(): boolean {
   return (
@@ -148,11 +149,16 @@ export function useTerminal() {
     setCustomizerOpen(false);
     setView({ kind: "project", slug });
   }, []);
+  const openSnake = useCallback(() => {
+    // Same single-overlay invariant as openProject: never leave the picker open
+    // (and focusable) behind the game.
+    setCustomizerOpen(false);
+    setView({ kind: "snake" });
+  }, []);
   const closeView = useCallback(() => setView({ kind: "home" }), []);
 
-  // Shared core: echo the line, record it in history, run the command. Used by
-  // both typing (submit) and clicking a bubble (runCommand) — so a click is
-  // identical to typing.
+  // Shared core: echo the line, record it in history, run the command. Driven by
+  // submit() when the visitor presses Enter.
   const execute = useCallback(
     async (rawLine: string) => {
       if (isRunning) return;
@@ -183,6 +189,7 @@ export function useTerminal() {
         resetCustom,
         startBoot,
         openProject,
+        openSnake,
         theme,
         registry,
       };
@@ -208,6 +215,7 @@ export function useTerminal() {
       resetCustom,
       startBoot,
       openProject,
+      openSnake,
       theme,
       nextId,
     ],
@@ -216,11 +224,11 @@ export function useTerminal() {
   const submit = useCallback(() => {
     const rawLine = input;
     setInput("");
+    // Empty / whitespace-only Enter is a no-op: the prompt is now a pinned box,
+    // so there's no "fresh prompt line" to echo — it would just be clutter.
+    if (rawLine.trim() === "") return;
     void execute(rawLine);
   }, [input, execute]);
-
-  // Programmatic run (e.g. clicking a bubble) — goes through the same path.
-  const runCommand = useCallback((command: string) => void execute(command), [execute]);
 
   const historyPrev = useCallback(() => {
     const h = historyRef.current;
@@ -250,7 +258,6 @@ export function useTerminal() {
     input,
     setInput: handleInput,
     submit,
-    runCommand,
     complete,
     suggestion,
     isRunning,
@@ -262,6 +269,7 @@ export function useTerminal() {
     // project detail view
     view,
     openProject,
+    openSnake,
     closeView,
     // boot
     booting,

@@ -11,14 +11,6 @@ export const about: Command = {
     items: [
       { type: "text", text: `${profile.name} — ${profile.role}`, tone: "accent" },
       { type: "text", text: profile.bio, animate: true },
-      { type: "spacer" },
-      {
-        type: "keyval",
-        pairs: [
-          ["location", profile.location],
-          ["focus", profile.tagline],
-        ],
-      },
     ],
   }),
 };

@@ -9,5 +9,6 @@ export const launcherCards: OutputContent = {
     { icon: "folder", name: "projects", desc: "view my work", run: "projects" },
     { icon: "clock", name: "experience", desc: "where I've worked", run: "experience" },
     { icon: "mail", name: "contact", desc: "get in touch", run: "contact" },
+    { icon: "gamepad", name: "snake", desc: "play snake", run: "snake" },
   ],
 };

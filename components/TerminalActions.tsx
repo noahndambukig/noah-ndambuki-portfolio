@@ -2,14 +2,15 @@
 
 import { createContext, useContext } from "react";
 
-// Lets deep/recursive output (cards inside groups) dispatch a command on click
-// without prop-drilling. Terminal provides the real implementation.
+// Lets deep/recursive output (cards inside groups) act on a click without
+// prop-drilling. Terminal provides the real implementation. `fillCommand` pastes
+// a command into the prompt (it does NOT run it — the visitor presses Enter).
 export interface TerminalActions {
-  runCommand: (command: string) => void;
+  fillCommand: (command: string) => void;
 }
 
 export const TerminalActionsContext = createContext<TerminalActions>({
-  runCommand: () => {},
+  fillCommand: () => {},
 });
 
 export const useTerminalActions = () => useContext(TerminalActionsContext);

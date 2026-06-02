@@ -14,6 +14,7 @@ import { mufc } from "./mufc";
 import { open } from "./open";
 import { projects } from "./projects";
 import { resume } from "./resume";
+import { snake } from "./snake";
 import { theme } from "./theme";
 
 // The canonical command list. Add a command by importing it and appending here;
@@ -33,6 +34,7 @@ export const commands: Command[] = [
   theme,
   customize,
   banner,
+  snake,
   mufc,
   boot,
   clear,

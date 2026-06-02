@@ -24,8 +24,9 @@ export type OutputContent =
   | { type: "table"; columns?: string[]; rows: string[][]; tone?: Tone }
   | { type: "group"; items: OutputContent[] } // compose several blocks as one unit
   | { type: "spacer"; lines?: number }
-  // Clickable bubbles. `run` is the command executed on click (serializable — no
-  // functions). Rendered by OutputBlock via the terminal-actions context.
+  // Clickable bubbles. `run` is the command pasted into the prompt on click — the
+  // visitor presses Enter to run it (serializable — no functions). Rendered by
+  // OutputBlock via the terminal-actions context.
   | {
       type: "cards";
       items: Array<{ icon?: string; name: string; desc: string; run: string }>;
@@ -59,6 +60,8 @@ export interface CommandContext {
   startBoot: () => void;
   /** Open a project's detail view by slug. */
   openProject: (slug: string) => void;
+  /** Open the snake game overlay. */
+  openSnake: () => void;
   /** The currently active theme name. */
   theme: string;
   /** The command registry — lets commands enumerate their peers (help, autocomplete). */

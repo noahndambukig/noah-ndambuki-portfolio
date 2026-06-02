@@ -60,6 +60,7 @@ export function Prompt({
           onKeyDown={onKeyDown}
           disabled={isRunning}
           aria-label="terminal input"
+          placeholder="type a command…"
           autoComplete="off"
           autoCapitalize="off"
           autoCorrect="off"

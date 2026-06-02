@@ -250,6 +250,36 @@ body {
   pointer-events: none;
 }
 
+/* Placeholder hint — only while empty AND blurred; once focused the block caret
+   takes over, so we hide the placeholder to avoid drawing both at column 0. */
+.prompt-input::placeholder {
+  color: var(--fg-dim);
+  opacity: 0.55;
+}
+.prompt-input:focus::placeholder {
+  color: transparent;
+}
+
+/* The "designated outline": a persistent, bordered field pinned beneath the
+   scrollback so it's always obvious where to type. Glows on focus. */
+.prompt-box {
+  flex: none;
+  margin-top: 0.6rem;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--fg-dim) 45%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--fg) 3%, transparent);
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+.prompt-box:focus-within {
+  border-color: var(--accent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent),
+    0 0 16px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
 /* ------------------------------------------------------------------ *
  * Clickable bubbles (cards)                                           *
  * ------------------------------------------------------------------ */
@@ -435,6 +465,65 @@ body {
   font-style: italic;
 }
 
+/* ------------------------------------------------------------------ *
+ * Snake game (reuses the .detail overlay shell)                       *
+ * ------------------------------------------------------------------ */
+/* The snake dialog is focused programmatically (tabIndex -1) so the splash
+   Space-to-start key lands on the game, not the back button — no focus ring. */
+.detail:focus {
+  outline: none;
+}
+.snake-hud {
+  flex: none;
+  color: var(--fg-dim);
+  font-size: 0.85rem;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+/* Dedicated square stage. Sized independently of .detail-body so the canvas
+   measurement isn't skewed by that node's scrollbar-gutter width hack. */
+.snake-stage {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: clamp(0.75rem, 3vw, 2rem);
+}
+.snake-canvas {
+  display: block;
+  border-radius: 4px;
+  box-shadow:
+    0 0 12px var(--glow),
+    inset 0 0 0 1px color-mix(in srgb, var(--fg-dim) 30%, transparent);
+}
+.snake-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 0.5rem;
+  text-align: center;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at 50% 50%,
+    color-mix(in srgb, var(--bg) 55%, transparent),
+    transparent 70%
+  );
+}
+.snake-overlay-title {
+  color: var(--accent);
+  font-size: clamp(1.6rem, 6vw, 2.6rem);
+  letter-spacing: 0.18em;
+  text-shadow: 0 0 10px var(--glow);
+}
+.snake-overlay-line {
+  color: var(--fg-dim);
+  font-size: clamp(0.8rem, 2.4vw, 0.95rem);
+  letter-spacing: 0.04em;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .detail {
     animation: none;
@@ -459,11 +548,44 @@ body {
  * Hint footer                                                         *
  * ------------------------------------------------------------------ */
 .hint {
-  margin-top: 0.5rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid color-mix(in srgb, var(--fg-dim) 25%, transparent);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1ch;
+  margin-top: 0.45rem;
   color: var(--fg-dim);
   font-size: 0.8rem;
+}
+.hint-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6ch;
+}
+.hint kbd {
+  font: inherit;
+  line-height: 1;
+  padding: 0.1em 0.5em;
+  color: var(--fg);
+  border: 1px solid color-mix(in srgb, var(--fg-dim) 50%, transparent);
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--fg) 5%, transparent);
+}
+.hint-help {
+  opacity: 0.85;
+}
+
+/* Visually hidden, still announced by screen readers (e.g. the staged-command
+   live region). Standard clip-rect technique. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* ------------------------------------------------------------------ *
