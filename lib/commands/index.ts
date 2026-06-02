@@ -1,10 +1,8 @@
 import type { Command } from "@/lib/terminal/types";
 import { about } from "./about";
-import { banner } from "./banner";
 import { boot } from "./boot";
 import { clear } from "./clear";
 import { contact } from "./contact";
-import { customize } from "./customize";
 import { echo } from "./echo";
 import { experience } from "./experience";
 import { help } from "./help";
@@ -31,8 +29,6 @@ export const commands: Command[] = [
   linkedin,
   email,
   theme,
-  customize,
-  banner,
   snake,
   boot,
   clear,

@@ -82,13 +82,14 @@ export function useTerminal() {
   const historyIndexRef = useRef<number | null>(null);
 
   const startBoot = useCallback(() => {
-    // Close the picker so it can't sit (focusable) behind the boot overlay.
+    // Replay boot as if the page were refreshed: close the picker, wipe the
+    // scrollback / current input / history, and restore the fresh welcome
+    // (banner + tagline + launcher) so the post-boot handoff matches a reload.
     setCustomizerOpen(false);
-    // Guarantee a banner to glitch-reveal at handoff — e.g. after `clear` wiped it.
-    // Only the banner (not the whole welcome) so we don't duplicate the launcher/hint.
-    setLines((prev) =>
-      prev.some((l) => l.id === BANNER_LINE_ID) ? prev : [bannerLine(), ...prev],
-    );
+    setLines(restingLines());
+    setInput("");
+    historyRef.current = [];
+    historyIndexRef.current = null;
     setBooting(true);
   }, []);
   const completeBoot = useCallback(() => {
