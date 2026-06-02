@@ -9,8 +9,7 @@ export type Tone =
   | "accent"
   | "warn"
   | "error"
-  | "success"
-  | "brand"; // Manchester United red — for the crest and [MUFC] lines
+  | "success";
 
 /**
  * A unit of command output. Structured (not a render callback) so output stays

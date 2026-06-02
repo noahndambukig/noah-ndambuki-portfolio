@@ -10,7 +10,6 @@ import { experience } from "./experience";
 import { help } from "./help";
 import { home } from "./home";
 import { email, github, linkedin } from "./links";
-import { mufc } from "./mufc";
 import { open } from "./open";
 import { projects } from "./projects";
 import { resume } from "./resume";
@@ -35,7 +34,6 @@ export const commands: Command[] = [
   customize,
   banner,
   snake,
-  mufc,
   boot,
   clear,
   echo,

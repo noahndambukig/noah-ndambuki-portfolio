@@ -1,6 +1,5 @@
-// The system boot-log lines (Manchester United facts are interleaved at runtime
-// by BootSequence). `tag` drives the colored status label. Edit freely.
-export type BootTag = "ok" | "warn" | "info" | "mufc";
+// The system boot-log lines. `tag` drives the colored status label. Edit freely.
+export type BootTag = "ok" | "warn" | "info";
 
 export interface BootStep {
   text: string;
@@ -19,6 +18,3 @@ export const BOOT_STEPS: BootStep[] = [
   { text: "establishing uplink → ndambuki.ca", tag: "ok" },
   { text: "rendering identity", tag: "ok" },
 ];
-
-// Indices in BOOT_STEPS after which a random [MUFC] fact is spliced in.
-export const FACT_SLOTS = [3, 6, 9];

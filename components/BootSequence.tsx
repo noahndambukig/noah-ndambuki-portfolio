@@ -2,8 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { UNITED_CREST } from "@/lib/content/ascii";
-import { BOOT_STEPS, FACT_SLOTS, type BootTag } from "@/lib/content/bootScript";
-import { pickFacts } from "@/lib/content/mufc";
+import { BOOT_STEPS, type BootTag } from "@/lib/content/bootScript";
 import { PROMPT } from "@/lib/terminal/constants";
 
 interface BootLine {
@@ -43,17 +42,10 @@ export function BootSequence({ onComplete }: { onComplete: () => void }) {
       timers.current.push(window.setTimeout(fn, t));
     };
 
-    // Interleave random [MUFC] facts among the system steps.
-    const facts = pickFacts(FACT_SLOTS.length).map(
-      (text): BootLine => ({ text, tag: "mufc" }),
-    );
-    const lines: BootLine[] = [];
-    let fi = 0;
-    BOOT_STEPS.forEach((s, i) => {
-      lines.push({ text: s.text, tag: s.tag ?? "ok" });
-      if (FACT_SLOTS.includes(i) && fi < facts.length) lines.push(facts[fi++]);
-    });
-    while (fi < facts.length) lines.push(facts[fi++]);
+    const lines: BootLine[] = BOOT_STEPS.map((s): BootLine => ({
+      text: s.text,
+      tag: s.tag ?? "ok",
+    }));
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduce) {

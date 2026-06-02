@@ -981,23 +981,11 @@ body {
 }
 
 /* ------------------------------------------------------------------ *
- * Manchester United brand accent (theme-independent)                  *
+ * Brand reds (theme-independent)                                      *
  * ------------------------------------------------------------------ */
 :root {
-  --united-red: #da291c; /* deep brand red — large crest art only */
-  --united-red-text: #ff6f61; /* lighter brand red — readable body text (WCAG AA on all themes) */
-}
-/* Brand-toned TEXT uses the lighter red for contrast. */
-.tone-brand {
-  color: var(--united-red-text);
-}
-/* The crest is large/graphical art: keep the deep brand red + a matching red glow
-   (overriding the inherited theme-colored glow so it doesn't glow e.g. green). */
-.ob-ascii.tone-brand {
-  color: var(--united-red);
-  text-shadow:
-    0 0 10px rgba(218, 41, 28, 0.6),
-    0 0 24px rgba(218, 41, 28, 0.32);
+  --united-red: #da291c; /* deep brand red — boot crest art */
+  --united-red-text: #ff6f61; /* lighter brand red — snake food (readable on all themes) */
 }
 
 /* ------------------------------------------------------------------ *
@@ -1096,11 +1084,6 @@ body {
 }
 .boot-text {
   color: var(--fg);
-}
-/* United facts still pop in brand red, just without the tag label. */
-.boot-mufc .boot-text {
-  color: var(--united-red-text);
-  text-shadow: 0 0 8px rgba(255, 111, 97, 0.45);
 }
 
 .boot-footer {
