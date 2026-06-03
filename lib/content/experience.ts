@@ -9,20 +9,30 @@ export interface Experience {
 
 export const experience: Experience[] = [
   {
-    role: "Software Engineer",
+    role: "Software Engineer Intern",
     company: "Grid Insights",
-    start: "2024",
+    start: "May 2025",
     end: "now",
     bullets: [
-      "Placeholder: a high-impact thing you shipped here.",
-      "Placeholder: a technology or scope highlight.",
+      "Complete SaaS Development.",
     ],
   },
   {
-    role: "Earlier Role",
-    company: "Previous Company",
-    start: "2022",
-    end: "2024",
-    bullets: ["Placeholder achievement.", "Placeholder responsibility."],
+    role: "Software Developer",
+    company: "Open Robotics",
+    start: "September 2025",
+    end: "now",
+    bullets: [
+      "Controls System Development.",
+    ],
+  },
+  {
+    role: "Supervisor & Coach",
+    company: "Aylmer Soccer",
+    start: "May 2023",
+    end: "August 2024",
+    bullets: [
+      "Training Session Coordination & Match Management", /////Flag this
+    ],
   },
 ];

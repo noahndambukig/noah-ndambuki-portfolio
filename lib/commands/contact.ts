@@ -6,14 +6,13 @@ export const contact: Command = {
   summary: "get in touch",
   usage: "contact",
   run: () => {
-    const { email, github, linkedin, site } = profile.links;
+    const { email, github, linkedin } = profile.links;
     const items: OutputContent[] = [
       { type: "text", text: "reach me:", tone: "muted" },
       { type: "link", href: `mailto:${email}`, label: `✉  ${email}` },
       { type: "link", href: github, label: "GitHub ↗", external: true },
       { type: "link", href: linkedin, label: "LinkedIn ↗", external: true },
     ];
-    if (site) items.push({ type: "link", href: site, label: "Website ↗", external: true });
     return { type: "group", items };
   },
 };

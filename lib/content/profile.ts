@@ -3,17 +3,14 @@
 export const profile = {
   name: "Noah Ndambuki",
   role: "Software Engineer",
-  tagline: "web apps · data · the occasional Manchester United stat",
-  location: "Nairobi, Kenya", // TODO: confirm
+  location: "Canada",
   bio:
-    "Hi, I'm Noah — a software engineer who likes building things that are fast, " +
-    "thoughtful, and a little bit fun. I work across the stack but enjoy front-end " +
-    "and developer experience most. When I'm not shipping, I'm probably watching " +
-    "Manchester United.",
+    "Hi, I'm Noah — a computer engineering who likes building things that are fast, " +
+    "thoughtful, and a little bit fun.",
   links: {
-    email: "noah.ndambuki@grid-insights.net",
+    email: "noah.l.ndambuki@gmail.com",
     github: "https://github.com/noahndambukig",
     linkedin: "https://www.linkedin.com/in/noah-ndambuki", // TODO: confirm handle
-    site: "https://ndambuki.ca",
+    //site: "https://ndambuki.ca", why point them to what they are already on
   },
 };
