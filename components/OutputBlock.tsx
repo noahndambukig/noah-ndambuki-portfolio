@@ -49,14 +49,24 @@ export function OutputBlock({ content }: { content: OutputContent }) {
     case "table":
       return (
         <div
-          className={`ob-table tone-${content.tone ?? "default"}`}
+          className={`ob-table tone-${content.tone ?? "default"}${content.animate ? " ob-table--reveal" : ""}`}
           style={{
             gridTemplateColumns: `repeat(${content.rows[0]?.length ?? 1}, max-content)`,
           }}
         >
           {content.rows.map((row, ri) =>
             row.map((cell, ci) => (
-              <span key={`${ri}-${ci}`} className="ob-cell">
+              <span
+                key={`${ri}-${ci}`}
+                className="ob-cell"
+                // Per-row stagger with a slight per-column offset → a diagonal
+                // left-to-right print. No-op unless .ob-table--reveal is set.
+                style={
+                  content.animate
+                    ? { animationDelay: `${ri * 55 + ci * 35}ms` }
+                    : undefined
+                }
+              >
                 {cell}
               </span>
             )),

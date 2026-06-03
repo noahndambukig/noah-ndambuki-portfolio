@@ -784,6 +784,38 @@ body {
   color: var(--accent);
 }
 
+/* Staggered left-to-right cascade when a command freshly prints a table (e.g.
+ * `help`). Each cell wipes in from the left behind a phosphor flash; the inline
+ * per-cell animation-delay (set in OutputBlock) staggers rows top-to-bottom with
+ * a slight per-column offset, so the roster prints in on a diagonal. Distinct
+ * from the cards' vertical scanline reveal. Only opacity/clip-path/transform/
+ * filter animate, so fill-mode leaves the settled cells fully interactive. */
+.ob-table--reveal .ob-cell {
+  animation: table-cell-reveal 460ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes table-cell-reveal {
+  0% {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+    transform: translateX(-0.5ch);
+    filter: brightness(2);
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+    transform: translateX(0);
+    filter: brightness(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ob-table--reveal .ob-cell {
+    animation: none !important;
+  }
+}
+
 .ob-keyval {
   display: inline-grid;
   row-gap: 0.15em;

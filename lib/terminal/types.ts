@@ -20,7 +20,9 @@ export type OutputContent =
   | { type: "ascii"; text: string; tone?: Tone } // pre-formatted block, never animated
   | { type: "link"; href: string; label: string; external?: boolean; tone?: Tone }
   | { type: "keyval"; pairs: Array<[string, string]>; tone?: Tone }
-  | { type: "table"; columns?: string[]; rows: string[][]; tone?: Tone }
+  // Staggered left-to-right cascade on mount, row by row (e.g. `help` printing
+  // its command roster). Off for static tables; on when a command freshly prints.
+  | { type: "table"; columns?: string[]; rows: string[][]; tone?: Tone; animate?: boolean }
   | { type: "group"; items: OutputContent[] } // compose several blocks as one unit
   | { type: "spacer"; lines?: number }
   // Clickable bubbles. `run` is the command pasted into the prompt on click — the

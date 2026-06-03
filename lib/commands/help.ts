@@ -16,7 +16,7 @@ export const help: Command = {
       type: "group",
       items: [
         { type: "text", text: "Available commands", tone: "muted" },
-        { type: "table", rows },
+        { type: "table", rows, animate: true },
         { type: "spacer" },
         {
           type: "text",
