@@ -53,6 +53,7 @@ export const theme: Command = {
         type: "text",
         tone: "error",
         text: `unknown theme: ${requested} — try: ${THEME_NAMES.join(", ")}`,
+        animate: true,
       };
     }
 

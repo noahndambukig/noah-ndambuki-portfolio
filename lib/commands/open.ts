@@ -17,6 +17,7 @@ export const open: Command = {
         type: "text",
         tone: "error",
         text: `no such project: ${ctx.args[0] ?? "(none)"} — run 'projects' to list them`,
+        animate: true,
       };
     }
     ctx.openProject(project.slug);

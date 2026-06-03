@@ -6,5 +6,6 @@ export function notFound(name: string): OutputContent {
     type: "text",
     tone: "error",
     text: `command not found: ${name} — type 'help' for a list`,
+    animate: true,
   };
 }

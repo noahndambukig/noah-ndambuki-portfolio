@@ -252,6 +252,68 @@ body {
   pointer-events: none;
 }
 
+/* Submit button — pinned to the right of the prompt field. Touch-friendly tap
+   target that mirrors the Enter keybinding; styled as a glowing accent key so it
+   reads as part of the terminal chrome rather than a generic web button. */
+.prompt-submit {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5ch;
+  min-height: 2rem;
+  padding: 0.3rem 0.8rem;
+  font: inherit;
+  font-size: 0.85rem;
+  line-height: 1;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: 7px;
+  cursor: pointer;
+  transition:
+    color 140ms ease,
+    border-color 140ms ease,
+    background 140ms ease,
+    box-shadow 140ms ease,
+    opacity 140ms ease;
+}
+.prompt-submit:hover:not(:disabled),
+.prompt-submit:focus-visible {
+  outline: none;
+  color: var(--bg);
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.prompt-submit:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.prompt-submit:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+.prompt-submit-key {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+/* On narrow / touch screens drop the word and keep the glyph: a compact, square
+   key that's still a comfortable tap target. */
+@media (max-width: 560px), (pointer: coarse) {
+  .prompt-submit {
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+    padding: 0.3rem;
+    justify-content: center;
+  }
+  .prompt-submit-label {
+    display: none;
+  }
+  .prompt-submit-key {
+    font-size: 1.25rem;
+  }
+}
+
 /* Placeholder hint — only while empty AND blurred; once focused the block caret
    takes over, so we hide the placeholder to avoid drawing both at column 0. */
 .prompt-input::placeholder {

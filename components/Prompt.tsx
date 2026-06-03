@@ -47,6 +47,8 @@ export function Prompt({
     }
   };
 
+  const canSubmit = value.trim() !== "" && !isRunning;
+
   return (
     <div className="prompt-line">
       <span className="prompt-ps1">{PROMPT}</span>
@@ -90,6 +92,24 @@ export function Prompt({
           aria-hidden="true"
         />
       </span>
+      {/* Submit button — primarily for touch users who have no Enter key handy,
+          but works as a click target everywhere. Mirrors the Enter keybinding.
+          onMouseDown is suppressed so tapping it doesn't blur the input (keeps
+          the block caret alive); the actual run fires on click/tap. */}
+      <button
+        type="button"
+        className="prompt-submit"
+        onClick={onSubmit}
+        onMouseDown={(e) => e.preventDefault()}
+        disabled={!canSubmit}
+        aria-label="Run command"
+        title="Run command"
+      >
+        <span className="prompt-submit-key" aria-hidden="true">
+          ↵
+        </span>
+        <span className="prompt-submit-label">run</span>
+      </button>
     </div>
   );
 }

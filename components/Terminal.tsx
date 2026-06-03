@@ -73,6 +73,16 @@ export function Terminal() {
     }
   };
 
+  // Submitting a command always returns the view to the bottom — that's where
+  // the new output lands, and it's what every terminal does. Unlike passive
+  // growth (typewriter / async output), submit is an explicit action, so the
+  // anti-yank guard shouldn't apply: re-arm bottom-tracking so the
+  // ResizeObserver re-pins the view even if the visitor had scrolled up.
+  const handleSubmit = useCallback(() => {
+    nearBottomRef.current = true;
+    term.submit();
+  }, [term.submit]);
+
   // Pin the view to the bottom as content grows — including while the typewriter
   // reveals text. The scroller has a fixed height, so observe the inner content
   // wrapper (whose height actually changes), not the scroller itself.
@@ -174,7 +184,7 @@ export function Terminal() {
               value={term.input}
               suggestion={term.suggestion}
               onChange={term.setInput}
-              onSubmit={term.submit}
+              onSubmit={handleSubmit}
               onComplete={term.complete}
               onHistoryPrev={term.historyPrev}
               onHistoryNext={term.historyNext}

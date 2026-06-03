@@ -201,7 +201,7 @@ export function useTerminal() {
         if (result) pushOutput(result);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        pushOutput({ type: "text", tone: "error", text: `error: ${message}` });
+        pushOutput({ type: "text", tone: "error", text: `error: ${message}`, animate: true });
       } finally {
         setIsRunning(false);
       }
