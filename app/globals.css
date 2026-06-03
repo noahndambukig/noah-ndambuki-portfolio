@@ -1271,55 +1271,169 @@ body {
   text-shadow:
     0 0 10px rgba(218, 41, 28, 0.6),
     0 0 24px rgba(218, 41, 28, 0.32);
-  /* A chromatic slam-in that tears into bands, then settles to the clean crest
-     and holds steady — the boot log floods in once it has stabilised. */
-  animation: crest-in 760ms steps(3, end) both;
-  will-change: transform, clip-path, filter, text-shadow;
+  /* Broken-light strike-on: different bands of the crest (top / middle / bottom)
+     strike on and drop out at different moments, like a faulty neon tube fighting
+     to light, with chromatic-red surges — then the whole badge locks on steady.
+     No movement; clip-path picks which band is lit each frame. steps(1) per
+     segment gives hard on/off cuts, not soft fades. */
+  animation: crest-in 1100ms both;
+  will-change: opacity, clip-path, filter, text-shadow;
 }
 
-/* Entrance: RGB-split slam that tears into bands, then settles to the clean red. */
+/* Entrance: faulty-tube flicker — bands strike at different times, then lock on. */
 @keyframes crest-in {
+  /* dark, then the top band weakly strikes */
   0% {
     opacity: 0;
-    transform: translateY(4px) skewX(8deg) scale(1.05);
-    filter: brightness(2.6);
+    clip-path: inset(0 0 0 0);
+    filter: brightness(2.7);
     text-shadow:
       5px 0 0 rgba(0, 247, 255, 0.9),
       -5px 0 0 rgba(255, 30, 60, 0.9);
+    animation-timing-function: steps(1, jump-end);
   }
-  15% {
+  4% {
     opacity: 1;
-    transform: translateX(-6px) skewX(-4deg);
-    clip-path: inset(0 0 58% 0);
+    clip-path: inset(0 0 60% 0); /* top band */
+    filter: brightness(2.4);
     text-shadow:
-      -6px 0 0 rgba(0, 247, 255, 0.85),
-      6px 0 0 rgba(255, 30, 60, 0.85);
+      5px 0 0 rgba(0, 247, 255, 0.85),
+      -5px 0 0 rgba(255, 30, 60, 0.85);
+    animation-timing-function: steps(1, jump-end);
   }
+  8% {
+    opacity: 0.06; /* dropout */
+    animation-timing-function: steps(1, jump-end);
+  }
+  /* bottom band strikes */
+  12% {
+    opacity: 1;
+    clip-path: inset(54% 0 0 0);
+    filter: brightness(2.3);
+    text-shadow:
+      4px 0 0 rgba(0, 247, 255, 0.8),
+      -4px 0 0 rgba(255, 30, 60, 0.8);
+    animation-timing-function: steps(1, jump-end);
+  }
+  /* middle band strikes */
+  16% {
+    opacity: 1;
+    clip-path: inset(34% 0 38% 0);
+    filter: brightness(2.3);
+    text-shadow:
+      4px 0 0 rgba(0, 247, 255, 0.75),
+      -4px 0 0 rgba(255, 30, 60, 0.75);
+    animation-timing-function: steps(1, jump-end);
+  }
+  20% {
+    opacity: 0.1; /* full blackout */
+    clip-path: inset(0 0 0 0);
+    filter: brightness(1);
+    animation-timing-function: steps(1, jump-end);
+  }
+  /* whole badge flashes */
+  25% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+    filter: brightness(2);
+    text-shadow:
+      3px 0 0 rgba(0, 247, 255, 0.65),
+      -3px 0 0 rgba(255, 30, 60, 0.65);
+    animation-timing-function: steps(1, jump-end);
+  }
+  /* top half stutters */
   30% {
-    transform: translateX(6px) skewX(2deg);
-    clip-path: inset(46% 0 0 0);
+    opacity: 1;
+    clip-path: inset(0 0 46% 0);
+    filter: brightness(1.7);
+    text-shadow:
+      3px 0 0 rgba(0, 247, 255, 0.55),
+      -3px 0 0 rgba(255, 30, 60, 0.55);
+    animation-timing-function: steps(1, jump-end);
+  }
+  35% {
+    opacity: 0.3;
+    clip-path: inset(0 0 46% 0);
+    filter: brightness(1.2);
+    animation-timing-function: steps(1, jump-end);
+  }
+  /* bottom half stutters */
+  40% {
+    opacity: 1;
+    clip-path: inset(50% 0 0 0);
     filter: brightness(1.9);
     text-shadow:
-      4px 0 0 rgba(0, 247, 255, 0.7),
-      -4px 0 0 rgba(255, 30, 60, 0.7);
+      2px 0 0 rgba(0, 247, 255, 0.45),
+      -2px 0 0 rgba(255, 30, 60, 0.45);
+    animation-timing-function: steps(1, jump-end);
   }
+  /* brief whole-badge hold */
   46% {
-    transform: translateX(-3px);
+    opacity: 1;
     clip-path: inset(0 0 0 0);
-    filter: brightness(1.5);
+    filter: brightness(1.4);
     text-shadow:
-      -2px 0 0 rgba(0, 247, 255, 0.5),
-      2px 0 0 rgba(255, 30, 60, 0.5);
+      2px 0 0 rgba(0, 247, 255, 0.4),
+      -2px 0 0 rgba(255, 30, 60, 0.4);
+    animation-timing-function: steps(1, jump-end);
+  }
+  /* dramatic late dropout, then recovery strike */
+  52% {
+    opacity: 0.08;
+    filter: brightness(1);
+    animation-timing-function: steps(1, jump-end);
+  }
+  57% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+    filter: brightness(2.2);
+    text-shadow:
+      3px 0 0 rgba(0, 247, 255, 0.6),
+      -3px 0 0 rgba(255, 30, 60, 0.6);
+    animation-timing-function: steps(1, jump-end);
+  }
+  /* middle band buzzes */
+  62% {
+    opacity: 1;
+    clip-path: inset(30% 0 30% 0);
+    filter: brightness(1.6);
+    animation-timing-function: steps(1, jump-end);
+  }
+  66% {
+    opacity: 0.5;
+    clip-path: inset(30% 0 30% 0);
+    filter: brightness(1.2);
+    animation-timing-function: steps(1, jump-end);
   }
   70% {
-    transform: translateX(2px);
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+    filter: brightness(1.4);
     text-shadow:
-      0 0 10px rgba(218, 41, 28, 0.6),
-      0 0 24px rgba(218, 41, 28, 0.32);
+      1px 0 0 rgba(0, 247, 255, 0.3),
+      -1px 0 0 rgba(255, 30, 60, 0.3);
+    animation-timing-function: steps(1, jump-end);
   }
+  /* faint dying buzz, then settle */
+  80% {
+    opacity: 0.85;
+    clip-path: inset(0 0 0 0);
+    filter: brightness(1.15);
+    animation-timing-function: steps(1, jump-end);
+  }
+  86% {
+    opacity: 1;
+    filter: brightness(1.25);
+    animation-timing-function: steps(1, jump-end);
+  }
+  92% {
+    opacity: 0.95;
+    filter: brightness(1.1);
+  }
+  /* locked on — clean resting glow */
   100% {
     opacity: 1;
-    transform: none;
+    clip-path: inset(0 0 0 0);
     filter: brightness(1);
     text-shadow:
       0 0 10px rgba(218, 41, 28, 0.6),
