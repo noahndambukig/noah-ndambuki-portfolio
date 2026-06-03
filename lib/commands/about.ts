@@ -9,7 +9,7 @@ export const about: Command = {
   run: () => ({
     type: "group",
     items: [
-      { type: "text", text: `${profile.name} — ${profile.role}`, tone: "accent" },
+      { type: "text", text: `${profile.name} — ${profile.role}`, tone: "accent", reveal: "slide" },
       { type: "text", text: profile.bio, animate: true },
     ],
   }),

@@ -16,9 +16,10 @@ export const theme: Command = {
       return {
         type: "group",
         items: [
-          { type: "text", text: "Available themes", tone: "muted" },
+          { type: "text", text: "Available themes", tone: "muted", reveal: "slide" },
           {
             type: "table",
+            animate: true,
             rows: THEME_NAMES.map((n): [string, string] => [
               n === ctx.theme ? `▸ ${n}` : `  ${n}`,
               THEMES[n].label,
@@ -40,12 +41,18 @@ export const theme: Command = {
         type: "text",
         tone: "muted",
         text: "opening color picker — adjust any color to build your theme",
+        reveal: "dispatch",
       };
     }
 
     if (requested === "reset") {
       ctx.resetCustom();
-      return { type: "text", tone: "success", text: "custom theme reset to defaults" };
+      return {
+        type: "text",
+        tone: "success",
+        text: "custom theme reset to defaults",
+        reveal: "flash",
+      };
     }
 
     if (!ctx.setTheme(requested)) {
@@ -57,6 +64,6 @@ export const theme: Command = {
       };
     }
 
-    return { type: "text", tone: "success", text: `theme set to ${requested}` };
+    return { type: "text", tone: "success", text: `theme set to ${requested}`, reveal: "flash" };
   },
 };

@@ -772,6 +772,84 @@ body {
   flex-direction: column;
 }
 
+/* ------------------------------------------------------------------ *
+ * Per-line entrance animations (.ob-reveal)                           *
+ * Every command's output animates in; the variant fits what it does   *
+ * (see the Reveal type). Longhand props (not the `animation` shorthand)*
+ * so the staggered delay below survives each variant's override.      *
+ * --ob-i is the line's index within its group → a cascade.            *
+ * ------------------------------------------------------------------ */
+.ob-reveal {
+  animation-duration: 480ms;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation-fill-mode: both;
+  animation-delay: calc(var(--ob-i, 0) * 70ms);
+}
+
+/* dispatch — a transmit flicker + glow surge: the line reads like a channel
+   opening as the command hands off to an external link. */
+.ob-reveal--dispatch {
+  animation-name: ob-dispatch;
+  animation-duration: 540ms;
+  animation-timing-function: linear;
+}
+@keyframes ob-dispatch {
+  0% { opacity: 0; filter: brightness(2.6); }
+  15% { opacity: 1; }
+  30% { opacity: 0.25; }
+  45% { opacity: 1; }
+  60% { opacity: 0.55; }
+  78% { opacity: 1; filter: brightness(1.6); }
+  100% { opacity: 1; filter: brightness(1); }
+}
+
+/* slide — a left-to-right phosphor wipe; in a group each line follows the last,
+   like contact channels coming online one by one. */
+.ob-reveal--slide {
+  animation-name: ob-slide;
+  animation-duration: 440ms;
+}
+@keyframes ob-slide {
+  0% {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+    transform: translateX(-0.6ch);
+    filter: brightness(1.8);
+  }
+  60% { opacity: 1; }
+  100% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+    transform: translateX(0);
+    filter: brightness(1);
+  }
+}
+
+/* flash — a phosphor glow pulse: confirms a theme/color just changed. */
+.ob-reveal--flash {
+  animation-name: ob-flash;
+  animation-duration: 560ms;
+}
+@keyframes ob-flash {
+  0% { opacity: 0; filter: brightness(0.6); }
+  22% { opacity: 1; filter: brightness(2.3); }
+  60% { filter: brightness(1.3); }
+  100% { opacity: 1; filter: brightness(1); }
+}
+
+/* glitch — reuse the boot banner's CRT glitch-in for `home`'s name banner. */
+.ob-reveal--glitch {
+  animation-name: glitch-reveal;
+  animation-duration: 640ms;
+  animation-timing-function: steps(2, end);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ob-reveal {
+    animation: none !important;
+  }
+}
+
 .ob-table {
   display: inline-grid;
   column-gap: 2ch;

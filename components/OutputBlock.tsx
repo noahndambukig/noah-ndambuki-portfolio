@@ -1,31 +1,56 @@
 "use client";
 
-import type { OutputContent } from "@/lib/terminal/types";
+import type { CSSProperties } from "react";
+import type { OutputContent, Reveal } from "@/lib/terminal/types";
 import { Card } from "./Card";
 import { Typewriter } from "./Typewriter";
 
+// A reveal animation's class + its stagger index (as a CSS var). `index` is the
+// line's position within its group, so group children cascade one after another;
+// standalone lines (index undefined) start immediately.
+function reveal(kind: Reveal | undefined, index: number | undefined) {
+  if (!kind) return { className: "", style: undefined as CSSProperties | undefined };
+  return {
+    className: ` ob-reveal ob-reveal--${kind}`,
+    style: index != null ? ({ "--ob-i": index } as CSSProperties) : undefined,
+  };
+}
+
 // The single place structured OutputContent becomes JSX. Keeping all React here
-// lets lib/terminal stay serializable and framework-free.
-export function OutputBlock({ content }: { content: OutputContent }) {
+// lets lib/terminal stay serializable and framework-free. `index` is the line's
+// position within an enclosing group, used only to stagger reveal animations.
+export function OutputBlock({
+  content,
+  index,
+}: {
+  content: OutputContent;
+  index?: number;
+}) {
   switch (content.type) {
-    case "text":
+    case "text": {
+      const r = reveal(content.reveal, index);
       return (
-        <div className={`ob-text tone-${content.tone ?? "default"}`}>
+        <div className={`ob-text tone-${content.tone ?? "default"}${r.className}`} style={r.style}>
           <Typewriter text={content.text} animate={content.animate} />
         </div>
       );
+    }
 
-    case "ascii":
+    case "ascii": {
+      const r = reveal(content.reveal, index);
       return (
-        <pre className={`ob-ascii tone-${content.tone ?? "default"}`}>
+        <pre className={`ob-ascii tone-${content.tone ?? "default"}${r.className}`} style={r.style}>
           {content.text}
         </pre>
       );
+    }
 
-    case "link":
+    case "link": {
+      const r = reveal(content.reveal, index);
       return (
         <a
-          className={`ob-link tone-${content.tone ?? "accent"}`}
+          className={`ob-link tone-${content.tone ?? "accent"}${r.className}`}
+          style={r.style}
           href={content.href}
           target={content.external ? "_blank" : undefined}
           rel={content.external ? "noopener noreferrer" : undefined}
@@ -33,6 +58,7 @@ export function OutputBlock({ content }: { content: OutputContent }) {
           {content.label}
         </a>
       );
+    }
 
     case "keyval":
       return (
@@ -93,7 +119,7 @@ export function OutputBlock({ content }: { content: OutputContent }) {
       return (
         <div className="ob-group">
           {content.items.map((item, i) => (
-            <OutputBlock key={i} content={item} />
+            <OutputBlock key={i} content={item} index={i} />
           ))}
         </div>
       );

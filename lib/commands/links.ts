@@ -14,7 +14,7 @@ function opener(
     usage: name,
     run: () => {
       if (typeof window !== "undefined") window.open(href(), "_blank", "noopener");
-      return { type: "text", tone: "muted", text: note } as OutputContent;
+      return { type: "text", tone: "muted", text: note, reveal: "dispatch" } as OutputContent;
     },
   };
 }
@@ -39,6 +39,11 @@ export const email: Command = {
     if (typeof window !== "undefined") {
       window.location.href = `mailto:${profile.links.email}`;
     }
-    return { type: "text", tone: "muted", text: `opening mail to ${profile.links.email}…` };
+    return {
+      type: "text",
+      tone: "muted",
+      text: `opening mail to ${profile.links.email}…`,
+      reveal: "dispatch",
+    };
   },
 };

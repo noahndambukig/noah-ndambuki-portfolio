@@ -12,13 +12,24 @@ export type Tone =
   | "success";
 
 /**
+ * Named CRT entrance animations played once when a line mounts (see OutputBlock /
+ * globals.css `.ob-reveal`). Orthogonal to `animate` (typewriter) and to the
+ * cards/table reveals — a line uses one or the other, never both.
+ * - dispatch: transmit flicker — a command that opens an external link/channel
+ * - slide:    left-to-right phosphor wipe-in (staggers across a group's lines)
+ * - flash:    a glow pulse — a theme/color just changed
+ * - glitch:   the boot banner's CRT glitch-in, reused for `home`
+ */
+export type Reveal = "dispatch" | "slide" | "flash" | "glitch";
+
+/**
  * A unit of command output. Structured (not a render callback) so output stays
  * serializable. The renderer decides how each variant is drawn.
  */
 export type OutputContent =
-  | { type: "text"; text: string; tone?: Tone; animate?: boolean }
-  | { type: "ascii"; text: string; tone?: Tone } // pre-formatted block, never animated
-  | { type: "link"; href: string; label: string; external?: boolean; tone?: Tone }
+  | { type: "text"; text: string; tone?: Tone; animate?: boolean; reveal?: Reveal }
+  | { type: "ascii"; text: string; tone?: Tone; reveal?: Reveal } // typewriter never, but a one-shot reveal is allowed
+  | { type: "link"; href: string; label: string; external?: boolean; tone?: Tone; reveal?: Reveal }
   | { type: "keyval"; pairs: Array<[string, string]>; tone?: Tone }
   // Staggered left-to-right cascade on mount, row by row (e.g. `help` printing
   // its command roster). Off for static tables; on when a command freshly prints.

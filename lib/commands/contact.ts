@@ -8,10 +8,10 @@ export const contact: Command = {
   run: () => {
     const { email, github, linkedin } = profile.links;
     const items: OutputContent[] = [
-      { type: "text", text: "reach me:", tone: "muted" },
-      { type: "link", href: `mailto:${email}`, label: "Email ↗" },
-      { type: "link", href: github, label: "GitHub ↗", external: true },
-      { type: "link", href: linkedin, label: "LinkedIn ↗", external: true },
+      { type: "text", text: "reach me:", tone: "muted", reveal: "slide" },
+      { type: "link", href: `mailto:${email}`, label: "Email ↗", reveal: "slide" },
+      { type: "link", href: github, label: "GitHub ↗", external: true, reveal: "slide" },
+      { type: "link", href: linkedin, label: "LinkedIn ↗", external: true, reveal: "slide" },
     ];
     return { type: "group", items };
   },

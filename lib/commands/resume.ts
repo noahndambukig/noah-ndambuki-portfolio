@@ -10,6 +10,11 @@ export const resume: Command = {
     if (typeof window !== "undefined") {
       window.open(asset("/resume.pdf"), "_blank", "noopener");
     }
-    return { type: "text", tone: "muted", text: "opening résumé (resume.pdf)…" };
+    return {
+      type: "text",
+      tone: "muted",
+      text: "opening résumé (resume.pdf)…",
+      reveal: "dispatch",
+    };
   },
 };
