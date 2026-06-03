@@ -32,7 +32,7 @@ export const experience: Experience[] = [
     start: "May 2023",
     end: "August 2024",
     bullets: [
-      "Training Session Coordination & Match Management", /////Flag this
+      "Training Session Coordination & In-Game Management.", /////Flag this
     ],
   },
 ];

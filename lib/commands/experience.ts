@@ -10,8 +10,8 @@ export const experience: Command = {
     const items: OutputContent[] = [];
     history.forEach((e, i) => {
       items.push({ type: "text", text: `${e.role} · ${e.company}`, tone: "accent" });
-      items.push({ type: "text", text: `${e.start} – ${e.end}`, tone: "muted" });
-      for (const b of e.bullets) items.push({ type: "text", text: `  • ${b}` });
+      items.push({ type: "text", text: `${e.start} – ${e.end}`, tone: "muted", animate: true });
+      for (const b of e.bullets) items.push({ type: "text", text: `  • ${b}`, animate: true });
       if (i < history.length - 1) items.push({ type: "spacer" });
     });
     return { type: "group", items };

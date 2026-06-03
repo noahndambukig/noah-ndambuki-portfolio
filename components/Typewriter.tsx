@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const CHARS_PER_SEC = 320; // reveal rate
-const MAX_DURATION = 1400; // cap so long prose still finishes quickly (ms)
+const CHARS_PER_SEC = 50; // reveal rate
+const MAX_DURATION = 2200; // cap so long prose still finishes quickly (ms)
 
 function prefersReducedMotion(): boolean {
   return (
