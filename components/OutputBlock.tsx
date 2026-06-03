@@ -66,7 +66,7 @@ export function OutputBlock({ content }: { content: OutputContent }) {
 
     case "cards":
       return (
-        <div className="card-grid">
+        <div className={`card-grid${content.animate ? " card-grid--reveal" : ""}`}>
           {content.items.map((item, i) => (
             <Card
               key={i}

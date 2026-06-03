@@ -45,6 +45,9 @@ function restingLines(): Line[] {
 // snake game overlay.
 type View = { kind: "home" } | { kind: "project"; slug: string } | { kind: "snake" };
 
+// Must match the .scrollback-content.clearing animation duration in globals.css.
+const CLEAR_DURATION = 420;
+
 function prefersReducedMotion(): boolean {
   return (
     typeof window !== "undefined" &&
@@ -66,6 +69,7 @@ export function useTerminal() {
 
   const [lines, setLines] = useState<Line[]>(restingLines);
   const [input, setInput] = useState("");
+  const [clearing, setClearing] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [customizerOpen, setCustomizerOpen] = useState(false);
   const [view, setView] = useState<View>({ kind: "home" });
@@ -113,7 +117,26 @@ export function useTerminal() {
     [nextId],
   );
 
-  const clear = useCallback(() => setLines([]), []);
+  // Clear plays a CRT power-down collapse (the inverse of the boot's power-on)
+  // before wiping the scrollback. Reduced-motion / a clear already in flight wipe
+  // instantly. The timer is cleared on unmount so it never sets state after.
+  const clearTimer = useRef<number | null>(null);
+  const clear = useCallback(() => {
+    if (prefersReducedMotion()) {
+      setLines([]);
+      return;
+    }
+    if (clearTimer.current !== null) return;
+    setClearing(true);
+    clearTimer.current = window.setTimeout(() => {
+      setLines([]);
+      setClearing(false);
+      clearTimer.current = null;
+    }, CLEAR_DURATION);
+  }, []);
+  useEffect(() => () => {
+    if (clearTimer.current !== null) window.clearTimeout(clearTimer.current);
+  }, []);
 
   const handleInput = useCallback((value: string) => {
     historyIndexRef.current = null;
@@ -256,6 +279,7 @@ export function useTerminal() {
 
   return {
     lines,
+    clearing,
     input,
     setInput: handleInput,
     submit,

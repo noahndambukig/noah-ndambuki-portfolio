@@ -29,6 +29,9 @@ export type OutputContent =
   | {
       type: "cards";
       items: Array<{ icon?: string; name: string; desc: string; run: string }>;
+      // Staggered scanline reveal on mount. Off for the static launcher; on when
+      // a command (e.g. `projects`) freshly prints the grid.
+      animate?: boolean;
     };
 
 /** A rendered line in the scrollback: either the echoed input or command output. */

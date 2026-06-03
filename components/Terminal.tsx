@@ -152,7 +152,10 @@ export function Terminal() {
 
           <div className="scroll-clip">
             <div className="scrollback" ref={scrollRef} onScroll={onScroll}>
-              <div className="scrollback-content" ref={contentRef}>
+              <div
+                className={`scrollback-content${term.clearing ? " clearing" : ""}`}
+                ref={contentRef}
+              >
                 {term.lines.map((line) => {
                   if (line.kind === "input") {
                     return (

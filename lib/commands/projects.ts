@@ -16,6 +16,7 @@ export const projects: Command = {
       },
       {
         type: "cards",
+        animate: true,
         items: projectList.map((p) => ({
           icon: p.icon ?? "folder",
           name: p.name,
