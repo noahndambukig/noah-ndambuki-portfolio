@@ -43,6 +43,7 @@ export function autocomplete(input: string, registry: Registry): CompleteResult 
   }
 
   // --- argument of a known command ---
+  if (tokens.length === 0) return {};
   const cmd = registry.lookup(tokens[0].toLowerCase());
   if (!cmd?.complete) return {};
   const argsBefore = hasTrailingSpace ? tokens.slice(1) : tokens.slice(1, -1);
@@ -81,6 +82,7 @@ export function suggest(input: string, registry: Registry): string {
   }
 
   // argument of a known command
+  if (tokens.length === 0) return "";
   const cmd = registry.lookup(tokens[0].toLowerCase());
   if (!cmd?.complete) return "";
   const partial = hasTrailingSpace ? "" : tokens[tokens.length - 1];
