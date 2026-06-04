@@ -5,6 +5,7 @@ import { commands } from "@/lib/commands";
 import { notFound } from "@/lib/commands/notFound";
 import { NAME_BANNER } from "@/lib/content/ascii";
 import { launcherCards } from "@/lib/content/launcher";
+import { projects as projectList } from "@/lib/content/projects";
 import { CUSTOM_THEME } from "@/lib/themes/themes";
 import { useTheme } from "@/lib/themes/useTheme";
 import {
@@ -17,6 +18,7 @@ import { autocomplete, suggest } from "./autocomplete";
 import { parse } from "./parse";
 import { createRegistry } from "./registry";
 import type { CommandContext, Line, OutputContent } from "./types";
+import { parseDeepLink, projectUrl } from "./url";
 
 // The resting scrollback (also the SSR / no-JS state): the name banner, a
 // tagline, and a hint. Static text + fixed ids → server and client first paint
@@ -87,6 +89,12 @@ function prefersReducedMotion(): boolean {
   );
 }
 
+// Guard for deep links: only a known project slug may open the detail overlay
+// (an unknown ?p= falls through to the normal boot).
+function isProjectSlug(slug: string): boolean {
+  return projectList.some((p) => p.slug === slug);
+}
+
 export function useTerminal() {
   const registry = useMemo(() => createRegistry(commands), []);
   const {
@@ -113,6 +121,20 @@ export function useTerminal() {
 
   const idRef = useRef(0);
   const nextId = useCallback(() => `l${idRef.current++}`, []);
+
+  // Guards the one-shot mount init (deep-link or boot) against React re-runs and
+  // StrictMode's dev double-invoke, so a ?cmd= can never echo twice.
+  const didInitRef = useRef(false);
+
+  // Latest view, read by the (once-registered) popstate handler without
+  // re-subscribing on every view change.
+  const viewRef = useRef(view);
+  viewRef.current = view;
+
+  // True while a closeProject-triggered history.back() is in flight, so a second
+  // close (e.g. Esc + back-button click in the same frame) can't pop past the
+  // home base and navigate off-site.
+  const closingProjectRef = useRef(false);
 
   const historyRef = useRef<string[]>([]);
   const historyIndexRef = useRef<number | null>(null);
@@ -141,11 +163,6 @@ export function useTerminal() {
     const stored = readStoredHistory();
     if (stored.length) historyRef.current = stored;
   }, []);
-
-  // Auto-play the boot on first mount, unless the visitor prefers reduced motion.
-  useEffect(() => {
-    if (!prefersReducedMotion()) startBoot();
-  }, [startBoot]);
 
   const pushOutput = useCallback(
     (out: OutputContent | OutputContent[]) => {
@@ -213,6 +230,9 @@ export function useTerminal() {
     // editor staying focusable behind the modal + a single Esc closing both).
     setCustomizerOpen(false);
     setView({ kind: "project", slug });
+    // Reflect the open overlay in the URL so it's sharable/bookmarkable and the
+    // browser Back button closes it; the popstate listener syncs the view back.
+    window.history.pushState(null, "", projectUrl(window.location.pathname, slug));
   }, []);
   const openSnake = useCallback(() => {
     // Same single-overlay invariant as openProject: never leave the picker open
@@ -221,6 +241,45 @@ export function useTerminal() {
     setView({ kind: "snake" });
   }, []);
   const closeView = useCallback(() => setView({ kind: "home" }), []);
+
+  // Closing the project detail pops the history entry openProject pushed, which
+  // mirrors the browser Back button — the popstate listener below then sets the
+  // view to home. A home entry always sits behind it (pushed from home, or
+  // synthesized for a deep link), so this never navigates off-site.
+  const closeProject = useCallback(() => {
+    // Esc and the back button both call this; a second trigger before the
+    // popstate resolves would pop past the home base off-site. Guard so only the
+    // first back() runs — the popstate handler clears the flag once it lands.
+    if (closingProjectRef.current) return;
+    closingProjectRef.current = true;
+    window.history.back();
+  }, []);
+
+  // Sync the view to the URL on history navigation (Back/Forward, or closeProject
+  // calling history.back). ?p=<slug> opens that project; its absence — or an
+  // unknown slug — returns home, which also dismisses the snake overlay if open.
+  useEffect(() => {
+    const onPopState = () => {
+      closingProjectRef.current = false; // the close-triggered back() has landed
+      // Snake isn't URL-synced; a Back/Forward must not tear it down. Re-pin the
+      // URL to clean home so a stale ?p= can't survive behind the game and reopen
+      // the project on the next reload/close.
+      if (viewRef.current.kind === "snake") {
+        if (window.location.search) {
+          window.history.replaceState(null, "", window.location.pathname);
+        }
+        return;
+      }
+      const { project } = parseDeepLink(window.location.search);
+      setView(
+        project && isProjectSlug(project)
+          ? { kind: "project", slug: project }
+          : { kind: "home" },
+      );
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
 
   // Shared core: echo the line, record it in history, run the command. Driven by
   // submit() when the visitor presses Enter.
@@ -288,6 +347,41 @@ export function useTerminal() {
     ],
   );
 
+  // One-shot mount init: honor a deep link, else auto-play the boot. Guarded so a
+  // re-created execute/startBoot (or StrictMode's dev double-invoke) can't replay
+  // it. A deep link is an explicit destination, so it pre-empts the cinematic
+  // boot and lands the visitor where the URL points.
+  useEffect(() => {
+    if (didInitRef.current) return;
+    didInitRef.current = true;
+
+    const { project, cmd } = parseDeepLink(window.location.search);
+    const path = window.location.pathname;
+
+    if (project && isProjectSlug(project)) {
+      // Normalize the current entry to clean home, then push the project on top,
+      // so both the in-app close (history.back) and the browser Back return to
+      // the terminal instead of leaving the site.
+      window.history.replaceState(null, "", path);
+      window.history.pushState(null, "", projectUrl(path, project));
+      setView({ kind: "project", slug: project });
+      return;
+    }
+    if (cmd) {
+      // Consume the ?cmd= so a refresh won't re-echo it; the command itself may
+      // navigate (e.g. `open <slug>` pushes its own ?p= entry on top of home).
+      window.history.replaceState(null, "", path);
+      void execute(cmd);
+      return;
+    }
+
+    // Any query still here is non-actionable (unknown ?p= slug, or a stray param):
+    // scrub it so the home view rests on a clean URL, matching the branches above
+    // and stopping a later popstate from re-parsing the stale slug.
+    if (window.location.search) window.history.replaceState(null, "", path);
+    if (!prefersReducedMotion()) startBoot();
+  }, [execute, startBoot]);
+
   const submit = useCallback(() => {
     const rawLine = input;
     setInput("");
@@ -339,6 +433,7 @@ export function useTerminal() {
     openProject,
     openSnake,
     closeView,
+    closeProject,
     // boot
     booting,
     completeBoot,

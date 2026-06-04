@@ -221,7 +221,7 @@ export function Terminal() {
       {term.booting && <BootSequence onComplete={term.completeBoot} />}
 
       {detailOpen && activeProject && (
-        <ProjectDetail project={activeProject} onClose={term.closeView} />
+        <ProjectDetail project={activeProject} onClose={term.closeProject} />
       )}
 
       {snakeOpen && <Snake onClose={term.closeView} />}
