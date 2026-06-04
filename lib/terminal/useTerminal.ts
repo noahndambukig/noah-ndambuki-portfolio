@@ -7,7 +7,12 @@ import { NAME_BANNER } from "@/lib/content/ascii";
 import { launcherCards } from "@/lib/content/launcher";
 import { CUSTOM_THEME } from "@/lib/themes/themes";
 import { useTheme } from "@/lib/themes/useTheme";
-import { BANNER_LINE_ID, PROMPT } from "./constants";
+import {
+  BANNER_LINE_ID,
+  HISTORY_LIMIT,
+  HISTORY_STORAGE_KEY,
+  PROMPT,
+} from "./constants";
 import { autocomplete, suggest } from "./autocomplete";
 import { parse } from "./parse";
 import { createRegistry } from "./registry";
@@ -48,6 +53,33 @@ type View = { kind: "home" } | { kind: "project"; slug: string } | { kind: "snak
 // Must match the .scrollback-content.clearing animation duration in globals.css.
 const CLEAR_DURATION = 420;
 
+// Command history persistence. Read tolerates absent/corrupt storage (returns
+// []) and filters to strings so a tampered value can't poison navigation; write
+// keeps only the most recent HISTORY_LIMIT entries so storage stays bounded.
+function readStoredHistory(): string[] {
+  try {
+    const raw = localStorage.getItem(HISTORY_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? parsed.filter((v): v is string => typeof v === "string")
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function persistHistory(history: string[]): void {
+  try {
+    localStorage.setItem(
+      HISTORY_STORAGE_KEY,
+      JSON.stringify(history.slice(-HISTORY_LIMIT)),
+    );
+  } catch {
+    /* ignore persistence failure */
+  }
+}
+
 function prefersReducedMotion(): boolean {
   return (
     typeof window !== "undefined" &&
@@ -87,18 +119,27 @@ export function useTerminal() {
 
   const startBoot = useCallback(() => {
     // Replay boot as if the page were refreshed: close the picker, wipe the
-    // scrollback / current input / history, and restore the fresh welcome
-    // (banner + tagline + launcher) so the post-boot handoff matches a reload.
+    // scrollback / current input, and restore the fresh welcome (banner +
+    // tagline + launcher) so the post-boot handoff matches a reload. Command
+    // history is reloaded from storage (not wiped) — a real refresh keeps it.
     setCustomizerOpen(false);
     setLines(restingLines());
     setInput("");
-    historyRef.current = [];
+    historyRef.current = readStoredHistory();
     historyIndexRef.current = null;
     setBooting(true);
   }, []);
   const completeBoot = useCallback(() => {
     setBooting(false);
     setBootReveal((c) => c + 1); // re-key the banner so its glitch-reveal fires
+  }, []);
+
+  // Restore the previous session's command history after the SSR paint (so no
+  // hydration mismatch). startBoot also rehydrates it, but reduced-motion
+  // visitors skip the boot, so this effect covers them.
+  useEffect(() => {
+    const stored = readStoredHistory();
+    if (stored.length) historyRef.current = stored;
   }, []);
 
   // Auto-play the boot on first mount, unless the visitor prefers reduced motion.
@@ -196,6 +237,7 @@ export function useTerminal() {
 
       if (parsed.name === "") return;
       historyRef.current = [...historyRef.current, rawLine];
+      persistHistory(historyRef.current);
 
       const cmd = registry.lookup(parsed.name);
       if (!cmd) {
@@ -216,6 +258,7 @@ export function useTerminal() {
         openSnake,
         theme,
         registry,
+        history: [...historyRef.current],
       };
 
       try {

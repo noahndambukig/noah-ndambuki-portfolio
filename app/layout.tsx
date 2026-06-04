@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono } from "next/font/google";
+import { profile } from "@/lib/content/profile";
 import {
   CUSTOM_STORAGE_KEY,
   CUSTOM_THEME,
@@ -13,6 +14,18 @@ import {
 } from "@/lib/themes/themes";
 import "./globals.css";
 
+// Canonical origin. Single source for metadataBase, Open Graph, JSON-LD, robots,
+// and sitemap — matches public/CNAME (the GitHub Pages custom domain).
+const SITE_URL = "https://ndambuki.ca";
+
+// A short, third-person snippet purpose-built for search results and link
+// unfurls (the chatty first-person bio in profile.ts reads oddly as a <meta>
+// description). Name + role still derive from profile so they never drift.
+const SEO_DESCRIPTION =
+  `${profile.name} — ${profile.role.toLowerCase()}. Projects, experience, and ` +
+  "contact, explored through an interactive terminal-style portfolio you type or click through.";
+const OG_DESCRIPTION = "A terminal-style portfolio you type (or click) through.";
+
 const plexMono = IBM_Plex_Mono({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
@@ -21,8 +34,58 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Noah Ndambuki",
-  description: "Terminal-style personal portfolio.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: `${profile.name} — ${profile.role}`,
+    template: `%s · ${profile.name}`,
+  },
+  description: SEO_DESCRIPTION,
+  applicationName: `${profile.name} — portfolio`,
+  authors: [{ name: profile.name, url: SITE_URL }],
+  creator: profile.name,
+  keywords: [
+    profile.name,
+    profile.role,
+    "portfolio",
+    "software engineer",
+    "developer",
+    "terminal",
+  ],
+  alternates: { canonical: "/" },
+  robots: { index: true, follow: true },
+  openGraph: {
+    type: "website",
+    url: SITE_URL,
+    siteName: profile.name,
+    title: `${profile.name} — ${profile.role}`,
+    description: OG_DESCRIPTION,
+    locale: "en_US",
+    // Static card at public/og.png (resolved absolute via metadataBase). It is a
+    // real .png so GitHub Pages serves the correct image/png content-type; a
+    // dynamic /opengraph-image route exports an extensionless file served as
+    // octet-stream, which social crawlers reject. Regenerate: see scripts/og-image.md.
+    images: [
+      { url: "/og.png", width: 1200, height: 630, alt: `${profile.name} — ${profile.role}` },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${profile.name} — ${profile.role}`,
+    description: OG_DESCRIPTION,
+    images: ["/og.png"],
+  },
+};
+
+// Structured identity for search engines: ties this site to the same person as
+// the linked GitHub/LinkedIn profiles. Derived from profile.ts (single source).
+const personLd = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: profile.name,
+  url: SITE_URL,
+  jobTitle: profile.role,
+  email: profile.links.email,
+  sameAs: [profile.links.github, profile.links.linkedin],
 };
 
 // Everything below derives from THEMES (single source): the <style> seeds :root
@@ -54,7 +117,13 @@ export default function RootLayout({
         <style dangerouslySetInnerHTML={{ __html: `:root{${defaultVars}}` }} />
         <script dangerouslySetInnerHTML={{ __html: noFlashScript }} />
       </head>
-      <body>{children}</body>
+      <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(personLd) }}
+        />
+        {children}
+      </body>
     </html>
   );
 }

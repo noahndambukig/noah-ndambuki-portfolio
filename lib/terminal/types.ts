@@ -81,6 +81,8 @@ export interface CommandContext {
   theme: string;
   /** The command registry — lets commands enumerate their peers (help, autocomplete). */
   registry: Registry;
+  /** Commands run this session (oldest first), including the current one — for `history`. */
+  history: string[];
 }
 
 export interface Command {

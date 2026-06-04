@@ -2,10 +2,10 @@
 // `about`, `contact`, and the direct openers.
 export const profile = {
   name: "Noah Ndambuki",
-  role: "Software Engineer",
+  role: "Software Developer",
   location: "Canada",
   bio:
-    "Hi, I'm Noah — a computer engineering who likes building things that are fast, " +
+    "Hi, I'm Noah — a computer engineering student who likes building things that are fast, " +
     "thoughtful, and a little bit fun.",
   links: {
     email: "noah.l.ndambuki@gmail.com",
