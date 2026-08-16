@@ -18,9 +18,11 @@ export type Tone =
  * - dispatch: transmit flicker — a command that opens an external link/channel
  * - slide:    left-to-right phosphor wipe-in (staggers across a group's lines)
  * - flash:    a glow pulse — a theme/color just changed
- * - glitch:   the boot banner's CRT glitch-in, reused for `home`
+ * - glitch:   the boot banner's CRT glitch-in (boot only)
+ * - decode:   glyph noise resolving into the real text, top-down (ascii only —
+ *             rendered by DecodeAscii, not a CSS keyframe)
  */
-export type Reveal = "dispatch" | "slide" | "flash" | "glitch";
+export type Reveal = "dispatch" | "slide" | "flash" | "glitch" | "decode";
 
 /**
  * A unit of command output. Structured (not a render callback) so output stays

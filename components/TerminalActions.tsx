@@ -3,14 +3,14 @@
 import { createContext, useContext } from "react";
 
 // Lets deep/recursive output (cards inside groups) act on a click without
-// prop-drilling. Terminal provides the real implementation. `fillCommand` pastes
-// a command into the prompt (it does NOT run it — the visitor presses Enter).
+// prop-drilling. Terminal provides the real implementation. `runCommand` echoes
+// the command into the scrollback and executes it immediately.
 export interface TerminalActions {
-  fillCommand: (command: string) => void;
+  runCommand: (command: string) => void;
 }
 
 export const TerminalActionsContext = createContext<TerminalActions>({
-  fillCommand: () => {},
+  runCommand: () => {},
 });
 
 export const useTerminalActions = () => useContext(TerminalActionsContext);

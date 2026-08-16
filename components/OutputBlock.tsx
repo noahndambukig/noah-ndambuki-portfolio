@@ -3,6 +3,7 @@
 import type { CSSProperties } from "react";
 import type { OutputContent, Reveal } from "@/lib/terminal/types";
 import { Card } from "./Card";
+import { DecodeAscii } from "./DecodeAscii";
 import { Typewriter } from "./Typewriter";
 
 // A reveal animation's class + its stagger index (as a CSS var). `index` is the
@@ -37,6 +38,17 @@ export function OutputBlock({
     }
 
     case "ascii": {
+      // "decode" is a JS reveal (characters resolve out of noise), not a CSS
+      // keyframe — hand the block to DecodeAscii with the same classes so the
+      // metrics and tone match the static path exactly.
+      if (content.reveal === "decode") {
+        return (
+          <DecodeAscii
+            text={content.text}
+            className={`ob-ascii tone-${content.tone ?? "default"}`}
+          />
+        );
+      }
       const r = reveal(content.reveal, index);
       return (
         <pre className={`ob-ascii tone-${content.tone ?? "default"}${r.className}`} style={r.style}>

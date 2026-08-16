@@ -46,23 +46,24 @@ export function Terminal() {
     el.setSelectionRange(end, end);
   }, []);
 
-  // A polite live-region message so screen-reader users learn a card click only
-  // STAGES a command (sighted users see it populate the always-visible prompt).
-  const [staged, setStaged] = useState("");
+  // A polite live-region message so screen-reader users hear that a card click
+  // ran its command (the echo lands in the scrollback, which is not live).
+  const [ran, setRan] = useState("");
 
-  // Clicking a card pastes its command into the prompt (it does NOT auto-run) —
-  // the visitor then presses Enter. This intentionally REPLACES any half-typed
-  // input (like picking from a command palette) and resets history navigation.
-  // We focus + caret-to-end after React commits the new value.
-  const fillCommand = useCallback(
+  // Clicking a card echoes its command into the scrollback and runs it
+  // immediately. Any half-typed draft is discarded (the card click supersedes
+  // it, like picking from a command palette); focus restore is handled by the
+  // isRunning effect below once the command settles.
+  const runCommand = useCallback(
     (command: string) => {
-      term.setInput(command);
-      setStaged(command);
-      requestAnimationFrame(focusInputAtEnd);
+      nearBottomRef.current = true; // explicit action → re-pin to the bottom
+      term.setInput("");
+      setRan(command);
+      void term.run(command);
     },
-    [term.setInput, focusInputAtEnd],
+    [term.setInput, term.run],
   );
-  const actions = useMemo(() => ({ fillCommand }), [fillCommand]);
+  const actions = useMemo(() => ({ runCommand }), [runCommand]);
 
   // Track whether the user is at the bottom, so growth doesn't yank them down
   // when they've scrolled up to read.
@@ -101,9 +102,9 @@ export function Terminal() {
     return () => ro.disconnect();
   }, []);
 
-  // Return focus to the input when nothing else owns it (also restores focus when
-  // a project detail view closes). Caret-to-end keeps it consistent if a card was
-  // clicked while a command was running (the input was disabled at paste time).
+  // Return focus to the input when nothing else owns it — after a command
+  // settles (isRunning flips false, incl. card-click runs) and when a project
+  // detail view closes.
   useEffect(() => {
     if (!term.isRunning && !term.customizerOpen && !term.booting && !overlayOpen) {
       focusInputAtEnd();
@@ -204,7 +205,7 @@ export function Terminal() {
             <span className="hint-help">type &apos;help&apos; to begin</span>
           </footer>
           <div className="sr-only" role="status" aria-live="polite">
-            {staged ? `Staged ${staged}. Press Enter to run.` : ""}
+            {ran ? `Ran ${ran}.` : ""}
           </div>
           <div className="vignette" aria-hidden="true" />
         </div>

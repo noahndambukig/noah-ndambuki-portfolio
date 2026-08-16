@@ -420,6 +420,7 @@ export function useTerminal() {
     input,
     setInput: handleInput,
     submit,
+    run: execute,
     complete,
     suggestion,
     isRunning,

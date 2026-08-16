@@ -357,14 +357,22 @@ body {
 }
 
 /* The "designated outline": a persistent, bordered field pinned beneath the
-   scrollback so it's always obvious where to type. Glows on focus. */
+   scrollback so it's always obvious where to type. Glows on focus. Same opaque
+   machined-panel recipe as .card, so the ASCII field never shows through. */
 .prompt-box {
   flex: none;
   margin-top: 0.6rem;
   padding: 0.55rem 0.85rem;
   border: 1px solid color-mix(in srgb, var(--fg-dim) 45%, transparent);
   border-radius: 10px;
-  background: color-mix(in srgb, var(--fg) 3%, transparent);
+  background-color: color-mix(in srgb, var(--fg) 5%, var(--bg));
+  background-image: linear-gradient(
+    color-mix(in srgb, var(--fg) 4%, transparent),
+    transparent
+  );
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--fg) 12%, transparent),
+    0 2px 8px rgba(0, 0, 0, 0.25);
   transition:
     border-color 140ms ease,
     box-shadow 140ms ease;
@@ -372,6 +380,7 @@ body {
 .prompt-box:focus-within {
   border-color: var(--accent);
   box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--fg) 12%, transparent),
     inset 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent),
     0 0 16px color-mix(in srgb, var(--accent) 30%, transparent);
 }
@@ -381,88 +390,180 @@ body {
  * ------------------------------------------------------------------ */
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 0.7rem;
-  margin: 0.4rem 0;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.85rem;
+  /* Extra top room: each pane's title tag rides above its border. */
+  margin: 0.9rem 0 0.4rem;
 }
+/* TUI panes, not web cards: square corners, flat opaque fill, no shadows —
+   depth the way a terminal does it. The command name is set INTO the top
+   border like a pane title (mc/htop), and selection is shown the way
+   terminals show it: reverse video. --panel drives both the pane fill and
+   the title's border-cutting patch, so hover floods them as one. */
 .card {
+  --panel: color-mix(in srgb, var(--fg) 5%, var(--bg));
+  position: relative;
   display: flex;
-  align-items: flex-start;
-  gap: 0.7rem;
+  align-items: center;
+  gap: 0.65rem;
   text-align: left;
-  padding: 0.8rem 0.9rem;
+  padding: 0.95rem 0.9rem 0.75rem;
   font: inherit;
   color: var(--fg);
-  background: color-mix(in srgb, var(--fg) 4%, transparent);
-  border: 1px solid color-mix(in srgb, var(--fg-dim) 45%, transparent);
-  border-radius: 10px;
+  background: var(--panel); /* opaque: the ASCII field never shows through */
+  border: 1px solid color-mix(in srgb, var(--fg-dim) 55%, transparent);
+  border-radius: 0;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  /* Near-snap: TUI selection flips, it does not ease. */
   transition:
-    border-color 120ms ease,
-    background 120ms ease,
-    transform 120ms ease;
+    background-color 70ms linear,
+    border-color 70ms linear,
+    color 70ms linear;
 }
 .card:hover,
 .card:focus-visible {
-  outline: none;
+  --panel: var(--accent);
   border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-  transform: translateY(-1px);
+  color: var(--bg);
 }
+.card:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 3px;
+}
+.card:active {
+  filter: brightness(0.9);
+}
+/* Plain glyph, no well — inverts with the flood. */
 .card-icon {
   flex: none;
-  margin-top: 1px;
-  color: var(--accent);
   display: grid;
   place-items: center;
+  color: color-mix(in srgb, var(--fg-dim) 70%, var(--fg));
+  transition: color 70ms linear;
+}
+.card:hover .card-icon,
+.card:focus-visible .card-icon {
+  color: var(--bg);
 }
 .card-text {
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
+/* Pane title: rides the top border and cuts through it — its patch shares
+   --panel with the pane so the reverse-video flood covers both at once. */
 .card-name {
+  position: absolute;
+  top: 0;
+  left: 0.7rem;
+  transform: translateY(-50%);
+  padding: 0 0.6ch;
+  background: var(--panel);
   color: var(--accent);
+  font-weight: 500;
+  font-size: 0.95em;
+  line-height: 1.3;
+  transition: background-color 70ms linear, color 70ms linear;
+}
+.card:hover .card-name,
+.card:focus-visible .card-name {
+  color: var(--bg);
+}
+/* Block caret after the title on hover — the terminal's "ready" cursor.
+   currentColor keeps it legible through the inversion. */
+.card-name::after {
+  content: "";
+  display: inline-block;
+  width: 0.55ch;
+  height: 1em;
+  margin-left: 0.4ch;
+  vertical-align: text-bottom;
+  background: currentColor;
+  opacity: 0;
+}
+.card:hover .card-name::after,
+.card:focus-visible .card-name::after {
+  opacity: 1;
+  animation: caret-blink 1.05s steps(1) infinite;
 }
 .card-desc {
   color: var(--fg-dim);
   font-size: 0.85rem;
+  line-height: 1.45;
+  transition: color 70ms linear;
+}
+.card:hover .card-desc,
+.card:focus-visible .card-desc {
+  color: color-mix(in srgb, var(--bg) 85%, var(--accent));
 }
 
-/* Staggered scanline reveal when a command freshly prints the grid (e.g.
- * `projects`). Each card scans in top-to-bottom with a CRT brightness flash,
- * one after the next. Only opacity / clip-path / filter are animated — none of
- * the properties :hover changes — so fill-mode keeps hover fully responsive
- * after the reveal settles. The static launcher grid omits .card-grid--reveal. */
+/* Cursor-walk reveal when a command freshly prints the grid (e.g. `projects`):
+ * the TUI selection cursor — a solid accent slab — lands on each empty slot,
+ * holds for the first half of the slot's beat, then lifts to reveal the drawn
+ * pane and hops to the next. Delay step (110ms) equals the slab phase of the
+ * 220ms beat, so the cursor leaves one pane exactly as it lands on the next.
+ * Pane and slab run twin animations with hard steps() cuts; backwards fill
+ * keeps both invisible through the stagger delay, and nothing persists after
+ * (the title riding above the border box must never end up clipped or
+ * covered). The static launcher grid omits .card-grid--reveal. */
 .card-grid--reveal .card {
-  animation: card-reveal 720ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: card-slot 220ms steps(1, end) backwards;
 }
-.card-grid--reveal .card:nth-child(1) { animation-delay: 80ms; }
-.card-grid--reveal .card:nth-child(2) { animation-delay: 220ms; }
-.card-grid--reveal .card:nth-child(3) { animation-delay: 360ms; }
-.card-grid--reveal .card:nth-child(4) { animation-delay: 500ms; }
-.card-grid--reveal .card:nth-child(5) { animation-delay: 640ms; }
-.card-grid--reveal .card:nth-child(6) { animation-delay: 780ms; }
-.card-grid--reveal .card:nth-child(7) { animation-delay: 920ms; }
-.card-grid--reveal .card:nth-child(n + 8) { animation-delay: 1060ms; }
-@keyframes card-reveal {
+/* The slab: covers the whole pane including the border-riding title. */
+.card-grid--reveal .card::after {
+  content: "";
+  position: absolute;
+  inset: -0.7em -1px -1px -1px;
+  z-index: 1;
+  background: var(--accent);
+  opacity: 0; /* only the keyframes ever show it */
+  pointer-events: none;
+  animation: card-cursor 220ms linear backwards;
+}
+.card-grid--reveal .card:nth-child(1),
+.card-grid--reveal .card:nth-child(1)::after { animation-delay: 0ms; }
+.card-grid--reveal .card:nth-child(2),
+.card-grid--reveal .card:nth-child(2)::after { animation-delay: 110ms; }
+.card-grid--reveal .card:nth-child(3),
+.card-grid--reveal .card:nth-child(3)::after { animation-delay: 220ms; }
+.card-grid--reveal .card:nth-child(4),
+.card-grid--reveal .card:nth-child(4)::after { animation-delay: 330ms; }
+.card-grid--reveal .card:nth-child(5),
+.card-grid--reveal .card:nth-child(5)::after { animation-delay: 440ms; }
+.card-grid--reveal .card:nth-child(6),
+.card-grid--reveal .card:nth-child(6)::after { animation-delay: 550ms; }
+.card-grid--reveal .card:nth-child(7),
+.card-grid--reveal .card:nth-child(7)::after { animation-delay: 660ms; }
+.card-grid--reveal .card:nth-child(n + 8),
+.card-grid--reveal .card:nth-child(n + 8)::after { animation-delay: 770ms; }
+/* steps(1, end) holds each keyframe's value until the next stop: hidden for
+   the slab half of the beat, on for the reveal half. */
+@keyframes card-slot {
+  0%, 49.9% {
+    opacity: 0;
+  }
+  50%, 100% {
+    opacity: 1;
+  }
+}
+/* Linear timing with duplicated stops = hard cuts at 0.1% seams. */
+@keyframes card-cursor {
   0% {
     opacity: 0;
-    clip-path: inset(0 0 100% 0);
-    filter: brightness(1.7);
   }
-  45% {
+  0.1%, 49.9% {
     opacity: 1;
   }
-  100% {
-    opacity: 1;
-    clip-path: inset(0 0 0 0);
-    filter: brightness(1);
+  50%, 100% {
+    opacity: 0;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .card-grid--reveal .card {
-    animation: none !important;
+  .card-grid--reveal .card,
+  .card-grid--reveal .card::after {
+    animation: none !important; /* slab's base opacity is 0 — stays hidden */
   }
 }
 
@@ -660,8 +761,15 @@ body {
   .detail {
     animation: none;
   }
-  .card {
+  .card,
+  .card-icon,
+  .card-name,
+  .card-desc {
     transition: none;
+  }
+  .card:hover .card-name::after,
+  .card:focus-visible .card-name::after {
+    animation: none; /* caret shows steady instead of blinking */
   }
 }
 
@@ -837,7 +945,8 @@ body {
   100% { opacity: 1; filter: brightness(1); }
 }
 
-/* glitch — reuse the boot banner's CRT glitch-in for `home`'s name banner. */
+/* glitch — the boot banner's CRT glitch-in (boot only). The `decode` reveal is
+   not a CSS keyframe: DecodeAscii resolves the characters in JS. */
 .ob-reveal--glitch {
   animation-name: glitch-reveal;
   animation-duration: 640ms;
@@ -907,22 +1016,29 @@ body {
 /* ------------------------------------------------------------------ *
  * Status-bar theme button (opens the custom picker)                   *
  * ------------------------------------------------------------------ */
+/* Opaque chip (same panel recipe as the cards/prompt) so the ASCII field
+   can't blaze through the label. Square, per the TUI pane language. */
 .statusbar-theme {
   font: inherit;
   letter-spacing: inherit;
   color: var(--fg-dim);
-  background: none;
-  border: 0;
-  padding: 0;
+  background: color-mix(in srgb, var(--fg) 5%, var(--bg));
+  border: 1px solid color-mix(in srgb, var(--fg-dim) 45%, transparent);
+  padding: 0.15rem 0.7ch;
   cursor: pointer;
-  text-decoration: underline dotted
-    color-mix(in srgb, var(--fg-dim) 55%, transparent);
-  text-underline-offset: 3px;
+  transition:
+    color 70ms linear,
+    border-color 70ms linear;
 }
 .statusbar-theme:hover,
 .statusbar-theme:focus-visible {
   color: var(--accent);
+  border-color: var(--accent);
   outline: none;
+}
+.statusbar-theme:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* ------------------------------------------------------------------ *

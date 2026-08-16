@@ -16,11 +16,12 @@ export const home: Command = {
   usage: "home",
   // Mirrors the freshly-booted resting state (banner + tagline + launcher) so
   // `home` brings the visitor back to exactly what a reload would show — with the
-  // banner glitching in and the launcher scanning in for the re-entry.
+  // banner decoding out of glyph noise and the launcher panes drawn in by the
+  // walking selection cursor.
   run: () => ({
     type: "group",
     items: [
-      { type: "ascii", text: NAME_BANNER, tone: "accent", reveal: "glitch" },
+      { type: "ascii", text: NAME_BANNER, tone: "accent", reveal: "decode" },
       {
         type: "text",
         text: "type 'help' for commands, or click a card below",

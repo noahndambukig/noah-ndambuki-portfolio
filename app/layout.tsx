@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono } from "next/font/google";
 import { profile } from "@/lib/content/profile";
-import { ParticleBackground } from "@/components/ParticleBackground";
+import { AsciiBackground } from "@/components/AsciiBackground";
 import {
   CUSTOM_STORAGE_KEY,
   CUSTOM_THEME,
@@ -123,7 +123,7 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(personLd) }}
         />
-        <ParticleBackground />
+        <AsciiBackground />
         {children}
       </body>
     </html>
