@@ -5,6 +5,10 @@ import { asset } from "@/lib/asset";
 import type { DetailBlock, Project } from "@/lib/content/projects";
 import { USER_HOST } from "@/lib/terminal/constants";
 
+function mediaClass(size?: "medium" | "small"): string {
+  return `detail-img${size ? ` detail-img--${size}` : ""}`;
+}
+
 function Block({ block }: { block: DetailBlock }) {
   switch (block.kind) {
     case "heading":
@@ -24,7 +28,24 @@ function Block({ block }: { block: DetailBlock }) {
         <figure className="detail-fig">
           {/* Static asset; no Next/Image (unoptimized export). */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="detail-img" src={asset(block.src)} alt={block.alt ?? ""} />
+          <img className={mediaClass(block.size)} src={asset(block.src)} alt={block.alt ?? ""} />
+          {block.caption && <figcaption className="detail-cap">{block.caption}</figcaption>}
+        </figure>
+      );
+    case "video":
+      return (
+        <figure className="detail-fig">
+          {/* Muted + playsInline lets browsers start it without user friction. */}
+          <video
+            className={mediaClass(block.size)}
+            src={asset(block.src)}
+            poster={block.poster ? asset(block.poster) : undefined}
+            controls
+            muted
+            loop
+            playsInline
+            preload="metadata"
+          />
           {block.caption && <figcaption className="detail-cap">{block.caption}</figcaption>}
         </figure>
       );
@@ -115,29 +136,31 @@ export function ProjectDetail({
           role="region"
           aria-label={`${project.name} details`}
         >
-          <h1 className="detail-title">{project.name}</h1>
-          <p className="detail-blurb">{project.blurb}</p>
-          <div className="detail-meta">
-            {project.tech.join(" · ")}
-            {project.year ? ` · ${project.year}` : ""}
-          </div>
-          {(project.url || project.repo) && (
-            <div className="detail-links">
-              {project.url && (
-                <a className="ob-link" href={project.url} target="_blank" rel="noopener noreferrer">
-                  live ↗
-                </a>
-              )}
-              {project.repo && (
-                <a className="ob-link" href={project.repo} target="_blank" rel="noopener noreferrer">
-                  source ↗
-                </a>
-              )}
+          <div className="detail-inner">
+            <h1 className="detail-title">{project.name}</h1>
+            <p className="detail-blurb">{project.blurb}</p>
+            <div className="detail-meta">
+              {project.tech.join(" · ")}
+              {project.year ? ` · ${project.year}` : ""}
             </div>
-          )}
-          {project.detail?.blocks.map((b, i) => (
-            <Block key={i} block={b} />
-          ))}
+            {(project.url || project.repo) && (
+              <div className="detail-links">
+                {project.url && (
+                  <a className="ob-link" href={project.url} target="_blank" rel="noopener noreferrer">
+                    live ↗
+                  </a>
+                )}
+                {project.repo && (
+                  <a className="ob-link" href={project.repo} target="_blank" rel="noopener noreferrer">
+                    source ↗
+                  </a>
+                )}
+              </div>
+            )}
+            {project.detail?.blocks.map((b, i) => (
+              <Block key={i} block={b} />
+            ))}
+          </div>
         </div>
       </div>
     </div>

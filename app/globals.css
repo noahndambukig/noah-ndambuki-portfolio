@@ -683,13 +683,33 @@ body {
 .detail-ul li {
   margin-bottom: 0.3rem;
 }
+/* Centered reading column: the body scrolls full-width, the content sits in
+   a capped column in the middle of the page. */
+.detail-inner {
+  max-width: 820px;
+  margin: 0 auto;
+}
 .detail-fig {
   margin: 0 0 1.5rem;
+  text-align: center;
 }
 .detail-img {
   max-width: 100%;
   border: 1px solid color-mix(in srgb, var(--fg-dim) 40%, transparent);
   border-radius: 8px;
+}
+/* Size caps for media blocks (projects.ts `size`); min() keeps them fluid on
+   viewports narrower than the cap. Capped media centers within the column. */
+.detail-img--medium,
+.detail-img--small {
+  display: block;
+  margin-inline: auto;
+}
+.detail-img--medium {
+  max-width: min(640px, 100%);
+}
+.detail-img--small {
+  max-width: min(400px, 100%);
 }
 .detail-cap {
   margin-top: 0.4rem;
