@@ -27,6 +27,15 @@ export const experience: Experience[] = [
     ],
   },
   {
+    role: "Co-Founder & Software Lead",
+    company: "JuaIT",
+    start: "March 2026",
+    end: "now",
+    bullets: [
+      "Bilingual WhatsApp Assistant for Solar Irrigation Sizing.",
+    ],
+  },
+  {
     role: "Supervisor & Coach",
     company: "Aylmer Soccer",
     start: "May 2023",
