@@ -3,6 +3,11 @@ import { IBM_Plex_Mono } from "next/font/google";
 import { profile } from "@/lib/content/profile";
 import { AsciiBackground } from "@/components/AsciiBackground";
 import {
+  CURSOR_FX_ATTR,
+  CURSOR_FX_OFF,
+  CURSOR_FX_STORAGE_KEY,
+} from "@/lib/settings/cursorFx";
+import {
   CUSTOM_STORAGE_KEY,
   CUSTOM_THEME,
   DEFAULT_THEME,
@@ -102,6 +107,16 @@ const noFlashScript = `(function(){try{var K=${JSON.stringify(
   CUSTOM_THEME,
 )},T=${JSON.stringify(THEMES)},E=${editableKeys},GA=${GLOW_ALPHA},SA=${SELECTION_ALPHA},hx=/^#[0-9a-fA-F]{6}$/,r=document.documentElement,n=localStorage.getItem(K);if(n&&T[n]){var v=Object.assign({},T[n].vars);if(n===CUSTOM){try{var s=JSON.parse(localStorage.getItem(CK)||"null");if(s&&typeof s==="object"){for(var i=0;i<E.length;i++){var ek=E[i],val=s[ek];if(typeof val==="string"&&hx.test(val)){v[ek]=val;}}}}catch(e2){}var m=/^#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$/.exec(v["--fg"]);if(m){var R=parseInt(m[1],16),G=parseInt(m[2],16),B=parseInt(m[3],16);v["--glow"]="rgba("+R+", "+G+", "+B+", "+GA+")";v["--selection"]="rgba("+R+", "+G+", "+B+", "+SA+")";}}for(var k in v){r.style.setProperty(k,v[k]);}r.setAttribute("data-theme",n);}}catch(e){}})();`;
 
+// Same pre-paint reasoning as the theme script, and it must run before the canvas
+// mounts: without it a visitor who turned the background off would get pointer
+// listeners attached and a frame of glyph scramble before React caught up.
+// On is the default, so only the opt-out writes an attribute.
+const cursorFxScript = `(function(){try{if(localStorage.getItem(${JSON.stringify(
+  CURSOR_FX_STORAGE_KEY,
+)})===${JSON.stringify(CURSOR_FX_OFF)}){document.documentElement.setAttribute(${JSON.stringify(
+  CURSOR_FX_ATTR,
+)},${JSON.stringify(CURSOR_FX_OFF)});}}catch(e){}})();`;
+
 export default function RootLayout({
   children,
 }: {
@@ -117,6 +132,7 @@ export default function RootLayout({
       <head>
         <style dangerouslySetInnerHTML={{ __html: `:root{${defaultVars}}` }} />
         <script dangerouslySetInnerHTML={{ __html: noFlashScript }} />
+        <script dangerouslySetInnerHTML={{ __html: cursorFxScript }} />
       </head>
       <body>
         <script

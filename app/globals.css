@@ -152,6 +152,16 @@ body {
   text-transform: uppercase;
 }
 
+/* Settings cluster — the middle column of the status bar. Wrapping keeps the
+   chips beside each other on narrow screens instead of splitting the row. */
+.statusbar-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1ch;
+}
+
 .statusbar-clock {
   font-variant-numeric: tabular-nums;
 }

@@ -7,6 +7,7 @@ import { useTerminal } from "@/lib/terminal/useTerminal";
 import { mergeCustomVars } from "@/lib/themes/themes";
 import { BootSequence } from "./BootSequence";
 import { Clock } from "./Clock";
+import { CursorFxToggle } from "./CursorFxToggle";
 import { OutputBlock } from "./OutputBlock";
 import { ProjectDetail } from "./ProjectDetail";
 import { Prompt } from "./Prompt";
@@ -142,12 +143,17 @@ export function Terminal() {
         <div className="screen">
           <header className="statusbar">
             <span className="statusbar-host">{USER_HOST}</span>
-            <ThemeMenu
-              current={term.theme}
-              onSelectTheme={term.setTheme}
-              onOpenCustomizer={term.openCustomizer}
-              customVars={customResolved}
-            />
+            {/* Grouped so the status bar keeps three space-between columns
+                (host · settings · clock) as controls are added. */}
+            <div className="statusbar-controls">
+              <ThemeMenu
+                current={term.theme}
+                onSelectTheme={term.setTheme}
+                onOpenCustomizer={term.openCustomizer}
+                customVars={customResolved}
+              />
+              <CursorFxToggle />
+            </div>
             <Clock />
           </header>
 

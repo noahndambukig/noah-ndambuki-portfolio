@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { CURSOR_FX_ATTR, CURSOR_FX_OFF } from "@/lib/settings/cursorFx";
 
 // ASCII cursor-reveal background. The viewport is tiled with a grid of faint
 // monospace glyphs (paper texture, not content). The cursor is the only light
@@ -12,8 +13,13 @@ import { useEffect, useRef } from "react";
 //
 // Pure canvas + one div, no deps. Sits behind all content (zIndex:-1,
 // pointer-events:none), reads --fg/--accent from the live theme so it recolors
-// on theme switch. Under prefers-reduced-motion it renders the static field
-// only. The rAF loop is fully stopped while idle (zero callbacks).
+// on theme switch. The rAF loop is fully stopped while idle (zero callbacks).
+//
+// Two independent off switches share one code path: prefers-reduced-motion, and
+// the status-bar cursor-animation toggle (a `data-cursor-fx="off"` attribute on
+// <html>). Either one leaves the static glyph field painted but detaches the
+// pointer listeners entirely — off means no rAF, no per-move work, not a loop
+// that runs and discards its result.
 //
 // Perf model: the resting field is painted once. Each frame clears and
 // repaints only the active (lit) cells — cost is proportional to the trail,
@@ -83,6 +89,11 @@ export function AsciiBackground() {
     if (!ctx) return;
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Re-read on every call: the toggle flips the attribute at runtime, so this
+    // must never be captured into a variable at mount.
+    const fxOff = () =>
+      reduced ||
+      document.documentElement.getAttribute(CURSOR_FX_ATTR) === CURSOR_FX_OFF;
 
     let w = 0, h = 0, dpr = 1;
     let cols = 0, rows = 0, cellW = 0, cellH = 0, pad = 0;
@@ -215,7 +226,7 @@ export function AsciiBackground() {
     };
 
     const ensureRunning = () => {
-      if (reduced || running || disposed) return;
+      if (fxOff() || running || disposed) return;
       running = true;
       last = performance.now();
       raf = requestAnimationFrame(loop);
@@ -281,46 +292,81 @@ export function AsciiBackground() {
       haze.style.opacity = "0";
     };
 
-    // Theme switch: CSS vars can't recolor rasterized pixels — full repaint
-    // (this path also serves reduced-motion, which has no loop to catch it).
-    const obs = new MutationObserver(() => {
-      recolor();
-      styleHaze();
-      paintAll();
-    });
-
-    setup();
-    // The web font lands after first paint and changes cell metrics — redo.
-    document.fonts?.ready.then(() => {
-      if (!disposed) setup();
-    }).catch(() => {});
-    obs.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["data-theme", "style"],
-    });
-    window.addEventListener("resize", setup);
-    if (!reduced) {
+    // Pointer listeners are attached only while the effect is enabled, so "off"
+    // costs nothing per mouse move. Guarded by a flag because syncFx() runs on
+    // every root-attribute mutation, including theme switches.
+    let listening = false;
+    const listenPointer = () => {
+      if (listening) return;
+      listening = true;
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerdown", onDown);
       window.addEventListener("pointerup", onUp);
       window.addEventListener("pointercancel", onUp);
       window.addEventListener("pointerleave", onLeave);
       window.addEventListener("blur", onLeave);
-    } else {
-      haze.style.display = "none";
-    }
-
-    return () => {
-      disposed = true;
-      cancelAnimationFrame(raf);
-      obs.disconnect();
-      window.removeEventListener("resize", setup);
+    };
+    const unlistenPointer = () => {
+      if (!listening) return;
+      listening = false;
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerdown", onDown);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
       window.removeEventListener("pointerleave", onLeave);
       window.removeEventListener("blur", onLeave);
+    };
+
+    // Bring the canvas in line with the current preference. Switching off mid-
+    // trail can't just stop the loop — the lit cells would freeze mid-decay — so
+    // it discards the light state and lets the caller repaint the resting field.
+    const syncFx = () => {
+      if (fxOff()) {
+        unlistenPointer();
+        cancelAnimationFrame(raf);
+        running = false;
+        mouse.active = false;
+        pulseUntil = 0;
+        active.clear();
+        flipChar.clear();
+        flipAt.clear();
+        energy.fill(0);
+        haze.style.opacity = "0";
+        haze.style.display = "none";
+      } else {
+        haze.style.display = "";
+        listenPointer();
+      }
+    };
+
+    // Root-attribute changes: a theme switch (CSS vars can't recolor rasterized
+    // pixels, so repaint) or the cursor-animation toggle. Both land here, and
+    // both end in a full repaint of the resting field.
+    const obs = new MutationObserver(() => {
+      recolor();
+      styleHaze();
+      syncFx();
+      paintAll();
+    });
+
+    setup();
+    syncFx();
+    // The web font lands after first paint and changes cell metrics — redo.
+    document.fonts?.ready.then(() => {
+      if (!disposed) setup();
+    }).catch(() => {});
+    obs.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme", "style", CURSOR_FX_ATTR],
+    });
+    window.addEventListener("resize", setup);
+
+    return () => {
+      disposed = true;
+      cancelAnimationFrame(raf);
+      obs.disconnect();
+      window.removeEventListener("resize", setup);
+      unlistenPointer();
     };
   }, []);
 
